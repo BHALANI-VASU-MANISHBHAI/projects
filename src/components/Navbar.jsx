@@ -6,7 +6,7 @@ import { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 
 const Navbar = () => {
-  const { search, setSearch, showSearch, setShowSearch } = useContext(ShopContext);
+  const { search, setSearch, showSearch, setShowSearch ,getCartCount } = useContext(ShopContext);
   const [visible, setVisible] = useState(false);
 
   return (
@@ -54,7 +54,7 @@ const Navbar = () => {
         <Link to="/cart" className="relative">
           <img src={assetss.cart_icon} alt="cart" className='w-5 h-5 cursor-pointer' />
           <p className="absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black aspect-square rounded-full text-[8px] text-white">
-            2
+            {getCartCount()}
           </p>
         </Link>
 
