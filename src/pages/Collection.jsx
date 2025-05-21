@@ -5,6 +5,7 @@ import Title from "../components/Title";
 import ProductItem from "../components/ProductItem";
 import { useEffect } from "react";
 import SearchBar from "../components/SearchBar";
+import { filter } from "lodash";
 const Collection = () => {
   const { products, search, showSearch } = useContext(ShopContext);
   const [showFilter, setShowFilter] = React.useState(true);
@@ -14,21 +15,6 @@ const Collection = () => {
   const [sortValue, setSortValue] = React.useState("relevent");
   
 
-  // applying search filter
-  
-  const applyFilter = ()=>{
-    let Productcopy = [...products];
-    console.log("Productcopy",Productcopy);
-    console.log("search",search);
-    console.log("showSearch",showSearch);
-    if(search && showSearch){
-      Productcopy = Productcopy.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-      );
-      console.log("Productcopy after search",Productcopy);
-      setFilterProduct(Productcopy);
-    }
-  }
 
 
   // Replace this in your component
@@ -57,28 +43,38 @@ const Collection = () => {
       setSubCategory((prev) => prev.filter((item) => item !== value));
     }
   };
-  useEffect(() => {
-    let filtered = products.filter((product) => {
-      const isCategoryMatch = category.length
-        ? category.includes(product.category)
-        : true;
-      const isSubCategoryMatch = subCategory.length
-        ? subCategory.includes(product.subCategory)
-        : true;
-      return isCategoryMatch && isSubCategoryMatch;
-    });
+ useEffect(() => {
+  // Start from a fresh copy of products
+  let filteredProducts = products.map(product => ({ ...product }));
 
-    if (sortValue === "low") {
-      filtered.sort((a, b) => a.price - b.price);
-    } else if (sortValue === "high") {
-      filtered.sort((a, b) => b.price - a.price);
-    } else {
-      filtered.sort((a, b) => a._id - 10*b._id);
-    }
+  // Apply search filter if needed
+  if (search && showSearch) {
+    filteredProducts = filteredProducts.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
-    setFilterProduct(filtered);
-    applyFilter();
-  }, [category, subCategory, products, search,showSearch]);
+  // Filter by category and subCategory
+  filteredProducts = filteredProducts.filter(product => {
+    const isCategoryMatch = category.length ? category.includes(product.category) : true;
+    const isSubCategoryMatch = subCategory.length ? subCategory.includes(product.subCategory) : true;
+    return isCategoryMatch && isSubCategoryMatch;
+  });
+
+  // Sort based on sortValue
+  if (sortValue === "low") {
+    filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortValue === "high") {
+    filteredProducts.sort((a, b) => b.price - a.price);
+  } else {
+    filteredProducts.sort((a, b) => a._id - 10 * b._id);
+  }
+
+  // Finally update state once with the fully filtered and sorted list
+  setFilterProduct(filteredProducts);
+
+}, [category, subCategory, products, search, showSearch, sortValue]);
+
 
   return (
     <div className="flex  flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
