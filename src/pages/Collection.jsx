@@ -73,7 +73,7 @@ const Collection = () => {
     } else if (sortValue === "high") {
       filtered.sort((a, b) => b.price - a.price);
     } else {
-      filtered.sort((a, b) => a._id - 2*b._id);
+      filtered.sort((a, b) => a._id - 10*b._id);
     }
 
     setFilterProduct(filtered);

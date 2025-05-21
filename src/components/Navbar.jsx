@@ -40,19 +40,19 @@ const Navbar = () => {
 
         {/* Profile Dropdown */}
         <div className='group relative'>
-          <img src={assetss.profile_icon} alt="profile" className='w-5 h-5 cursor-pointer' />
+         <Link to='/login'> <img src={assetss.profile_icon} alt="profile" className='w-5 h-5 cursor-pointer' /></Link>
           <div className='group-hover:block hidden absolute right-0 pt-4'>
             <div className='flex flex-col bg-white shadow-lg rounded-lg p-4 gap-2 w-40'>
-              <p className='text-sm text-gray-700 hover:text-black'>My Profile</p>
-              <p className='text-sm text-gray-700 hover:text-black'>Orders</p>
-              <p className='text-sm text-gray-700 hover:text-black'>Logout</p>
+              <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>My Profile</p>
+              <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>Orders</p>
+              <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>Logout</p>
             </div>
           </div>
         </div>
 
         {/* Cart Icon */}
         <Link to="/cart" className="relative">
-          <img src={assetss.cart_icon} alt="cart" className='w-5 h-5 cursor-pointer' />
+     <img src={assetss.cart_icon} alt="cart" className='w-5 h-5 cursor-pointer' />
           <p className="absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black aspect-square rounded-full text-[8px] text-white">
             {getCartCount()}
           </p>
