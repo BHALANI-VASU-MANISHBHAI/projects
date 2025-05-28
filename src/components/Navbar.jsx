@@ -6,12 +6,29 @@ import { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 
 const Navbar = () => {
-  const { search, setSearch, showSearch, setShowSearch ,getCartCount } = useContext(ShopContext);
+  const { setShowSearch ,getCartCount , navigate , setToken , setCartItems,token} = useContext(ShopContext);
   const [visible, setVisible] = useState(false);
+
+
+const  logout = () => {
+  setToken('');
+  localStorage.removeItem('token');
+  setCartItems({});
+  navigate('/login');
+}
 
   return (
     <div className='flex justify-between items-center py-4'>
-     <Link to='/' ><img src={assets.logo} alt="logo" className='w-32 h-10' /></Link>
+<Link to='/'>
+  <div className="w-32 aspect-[16/5] relative">
+    <img 
+      src={assets.logo} 
+      alt="logo" 
+      className="absolute inset-0 w-full h-full object-contain"
+    />
+  </div>
+</Link>
+
 
       {/* Desktop Navigation Links */}
       <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
@@ -40,14 +57,16 @@ const Navbar = () => {
 
         {/* Profile Dropdown */}
         <div className='group relative'>
-         <Link to='/login'> <img src={assetss.profile_icon} alt="profile" className='w-5 h-5 cursor-pointer' /></Link>
+     <img onClick={()=>token ? null :navigate('/login')} src={assetss.profile_icon} alt="profile" className='w-5 h-5 aspect-[16/5]  cursor-pointer' />
+     { token &&
           <div className='group-hover:block hidden absolute right-0 pt-4'>
             <div className='flex flex-col bg-white shadow-lg rounded-lg p-4 gap-2 w-40'>
               <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>My Profile</p>
-              <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>Orders</p>
-              <p className='text-sm text-gray-700 hover:text-black cursor-pointer'>Logout</p>
+              <p  onClick={()=>navigate('/orders')}  className='text-sm text-gray-700 hover:text-black cursor-pointer'>Orders</p>
+              <p onClick={logout}  className='text-sm text-gray-700 hover:text-black cursor-pointer'>Logout</p>
             </div>
           </div>
+}
         </div>
 
         {/* Cart Icon */}
@@ -58,7 +77,7 @@ const Navbar = () => {
           </p>
         </Link>
 
-        {/* Mobile Menu Icon */}
+          
         <img
           onClick={() => setVisible(true)}
           src={assetss.menu_icon}

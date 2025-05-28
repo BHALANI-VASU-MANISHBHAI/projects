@@ -19,13 +19,12 @@ const Collection = () => {
 
   // Replace this in your component
   const SortProduct = (e) => {
+    console.log(e.target.value);
     setSortValue(e.target.value); // Only update the sort value
   };
 
   const handleCategory = (e) => {
     const { value, checked } = e.target;
-    console.log(value);
-    console.log(checked);
     if (checked) {
       setCategory((prev) => [...prev, value]);
     } else {
@@ -35,8 +34,7 @@ const Collection = () => {
 
   const handleSubCategory = (e) => {
     const { value, checked } = e.target;
-    console.log(value);
-    console.log(checked);
+
     if (checked) {
       setSubCategory((prev) => [...prev, value]);
     } else {
@@ -67,7 +65,7 @@ const Collection = () => {
   } else if (sortValue === "high") {
     filteredProducts.sort((a, b) => b.price - a.price);
   } else {
-    filteredProducts.sort((a, b) => a._id - 10 * b._id);
+    filteredProducts.sort((a, b) => a._id -  b._id);
   }
 
   // Finally update state once with the fully filtered and sorted list

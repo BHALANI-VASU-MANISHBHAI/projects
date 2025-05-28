@@ -2,10 +2,11 @@ import React from 'react'
 import { useContext } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
+import { get } from 'lodash';
 
 
 const CartTotal = () => {
-    const {currency , delivery_fee,getCartAmount} = useContext(ShopContext);
+    const {currency , delivery_fee,getCartAmount,getCartCount} = useContext(ShopContext);
   return (
     <div className='w-full'>
         <div className='text-2xl '>
@@ -19,12 +20,14 @@ const CartTotal = () => {
             <hr />
             <div className='flex justify-between'>
                 <p>Shipping Fee</p>
-                <p>{currency} {delivery_fee}</p>
+
+                { getCartCount() === 0 ? <p>0</p> :
+                    <p>{currency} {delivery_fee}</p>}
             </div>
             <hr />
             <div className='flex justify-between'>
                 <b className='font-semibold'>Total</b>
-                <b className='font-semibold'>{currency} {getCartAmount() === 0?0 : getCartAmount() +delivery_fee}</b>
+                <b className='font-semibold'>{currency} {getCartAmount() === 0 ? 0 : getCartAmount() +delivery_fee}</b>
             </div>
         </div>
 
