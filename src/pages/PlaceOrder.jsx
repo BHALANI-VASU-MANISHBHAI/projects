@@ -71,51 +71,79 @@ const PlaceOrder = () => {
     break;
 
   case "razorpay":
-    const razorpayResponse = await axios.post(
-      backendUrl + '/api/order/razorpay',
-      {
-        amount: orderData.amount,
-        currency: "INR",
-        receipt: "receipt#" + new Date().getTime(),
-        orderData: orderData,
-      },
-      { headers: { token } }
-    );
+    console.log("orderData", orderData);  
+  const razorpayResponse = await axios.post(
+  backendUrl + "/api/order/razorpay",
+  {
+    amount: orderData.amount,
+    currency: "INR",
+    orderData: orderData,
+  },
+  { headers: { token } }
+);
 
-    const { razorpayOrder, key, orderData: backendOrderData } = razorpayResponse.data;
 
-    const options = {
-      key,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-      name: "Your Shop",
-      description: "Test Transaction",
-      order_id: razorpayOrder.id,
-      handler: async function (response) {
-        const verifyRes = await axios.post(
-          backendUrl + '/api/order/razorpayverify',
+if (razorpayResponse.data.success) {
+  const options = {
+    key: razorpayKey,
+    amount: razorpayResponse.data.razorpayOrder.amount,
+    currency: razorpayResponse.data.razorpayOrder.currency,
+    name:"Vasu Store",
+    description: "Order Payment",
+    order_id: razorpayResponse.data.razorpayOrder.id,
+    handler: async (response) => {
+      try {
+        const verifyResponse = await axios.post(
+          backendUrl + "/api/order/verify-order-razorpay",
           {
+             
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            orderData: backendOrderData,
+            orderData: orderData,
           },
           { headers: { token } }
         );
 
-        if (verifyRes.data.success) {
-          toast.success("Payment Successful!");
+        if (verifyResponse.data.success) {
           setCartItems({});
           navigate('/orders');
         } else {
-          toast.error("Payment verification failed!");
+          toast.error(verifyResponse.data.message);
         }
-      },
-      theme: { color: "#3399cc" }
-    };
+      } catch (error) {
+        console.error("Error verifying payment:", error);
+        toast.error("Payment verification failed");
+      }
+    },
+    prefill: {
+      name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      contact: formData.phone,
+    },
+    theme: {
+      color: "#F37254",
+    },
+  };
+  const razorpay = new window.Razorpay(options);
+  razorpay.open();
+}
+    else {
+      toast.error(razorpayResponse.data.message);
+    }
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+
+
+
+
+
+
+
+
+ 
+
+    
+
     break;
 }
 
@@ -239,7 +267,7 @@ const PlaceOrder = () => {
 
         </div>
       </div>
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
     </form>
     
   );
