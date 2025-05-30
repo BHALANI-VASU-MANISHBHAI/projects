@@ -6,7 +6,7 @@ import { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 
 const Navbar = () => {
-  const { setShowSearch ,getCartCount , navigate , setToken , setCartItems,token} = useContext(ShopContext);
+  const { setShowSearch ,getCartCount , navigate , setToken , setCartItems,token,userData} = useContext(ShopContext);
   const [visible, setVisible] = useState(false);
 
 
@@ -57,7 +57,8 @@ const  logout = () => {
 
         {/* Profile Dropdown */}
         <div className='group relative'>
-     <img onClick={()=>token ? null :navigate('/login')} src={assetss.profile_icon} alt="profile" className='w-5 h-5 aspect-[16/5]  cursor-pointer' />
+     <img onClick={()=>token ? null :navigate('/login')} src={userData.profilePhoto} alt="profile" className= {`w-5 h-5 cursor-pointer rounded-full ${userData.profilePhoto!=''?'w-7 h-7':
+      'w-5 '}`} />
      { token &&
           <div className='group-hover:block hidden absolute right-0 pt-4'>
             <div className='flex flex-col bg-white shadow-lg rounded-lg p-4 gap-2 w-40'>

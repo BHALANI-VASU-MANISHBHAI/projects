@@ -19,6 +19,7 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
   const [token ,setToken] = useState('');
+  
   const navigate = useNavigate();
 
 
@@ -164,7 +165,12 @@ const getUserCart = async(token)=>{
     }
     try{
       console.log("Token in getUserData:", token);
-      const response = await axios.get(backendUrl+"/api/user/getdata", {},{headers:{token}});
+    const response = await axios.post(
+  backendUrl + "/api/user/getdataofuser",
+  { someKey: "someValue" },  // <-- Pass as plain JS object
+  { headers: { token } }
+);
+
       console.log("User Data Response:", response.data);
       if(response.data.success){
         setUserData(response.data.user);
@@ -179,10 +185,7 @@ const getUserCart = async(token)=>{
   } 
 useEffect(() => {
     getProductsData();
-    if(token){
-      getUserCart(token);
-    }
-  }, [token]);
+  }, []);
     
 
   useEffect(()=>{
@@ -190,7 +193,7 @@ useEffect(() => {
       setToken(localStorage.getItem('token'));
      getUserCart(localStorage.getItem('token'));
 
-     console.log("Token from localStorage:", localStorage.getItem('token'));
+      getUserData(localStorage.getItem('token'));
     
     }
   },[])
@@ -218,7 +221,8 @@ useEffect(() => {
     getUserCart,
     getProductsData,
     getUserData,
-    
+    userData,
+    setUserData,
   };
 
   return (

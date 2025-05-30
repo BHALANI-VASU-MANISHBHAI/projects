@@ -11,7 +11,9 @@ import { toast } from 'react-toastify'
 const PlaceOrder = () => {
   const{navigate ,backendUrl , token , cartItems,setCartItems, getCartAmount ,delivery_fee,products } = useContext(ShopContext)
   const [method, setMethod] = React.useState("cod");
-
+  const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY;
+  console.log("razorpayKey ",import.meta.env.VITE_RAZORPAY_KEY);
+  console.log("razorpayKey ",razorpayKey);
   const [formData, setFormData] = React.useState({
     firstName: "",
     lastName: "",
@@ -23,6 +25,7 @@ const PlaceOrder = () => {
     country: "",
     phone: "" 
   });
+  
 
   const onChangeHandler = (e) => {
     const name = e.target.name;
@@ -56,22 +59,66 @@ const PlaceOrder = () => {
       items: orderItems,
       amount : getCartAmount() + delivery_fee
      }
+     switch (method) {
+  case "cod":
+    const response = await axios.post(backendUrl + '/api/order/place', orderData, { headers: { token } });
+    if (response.data.success) {
+      setCartItems({});
+      navigate('/orders');
+    } else {
+      toast.error(response.data.message);
+    }
+    break;
 
-     switch(method){
-       // api calls for COD
-       case "cod":
-        console.log(backendUrl+'/api/order/place');
-        console.log("orderData ",orderData);
-        const response = await axios.post(backendUrl+'/api/order/place',orderData,{headers:{token}});
-        console.log("responce ",response);
-        if(response.data.success){
+  case "razorpay":
+    const razorpayResponse = await axios.post(
+      backendUrl + '/api/order/razorpay',
+      {
+        amount: orderData.amount,
+        currency: "INR",
+        receipt: "receipt#" + new Date().getTime(),
+        orderData: orderData,
+      },
+      { headers: { token } }
+    );
+
+    const { razorpayOrder, key, orderData: backendOrderData } = razorpayResponse.data;
+
+    const options = {
+      key,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "Your Shop",
+      description: "Test Transaction",
+      order_id: razorpayOrder.id,
+      handler: async function (response) {
+        const verifyRes = await axios.post(
+          backendUrl + '/api/order/razorpayverify',
+          {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            orderData: backendOrderData,
+          },
+          { headers: { token } }
+        );
+
+        if (verifyRes.data.success) {
+          toast.success("Payment Successful!");
           setCartItems({});
           navigate('/orders');
-        }else{
-           toast.error(response.data.message);       
+        } else {
+          toast.error("Payment verification failed!");
         }
+      },
+      theme: { color: "#3399cc" }
+    };
 
-     }
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+    break;
+}
+
 
     }catch(err){
       console.log(err);
@@ -192,7 +239,9 @@ const PlaceOrder = () => {
 
         </div>
       </div>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     </form>
+    
   );
 }
 

@@ -13,10 +13,10 @@ import Orders from "./pages/Orders"
 import Footer from "./components/Footer"
 import SearchBar from "./components/SearchBar"
 import React from 'react';
+import ProfileView from "./pages/ProfileView"
+import ProfileEdit from "./pages/ProfileEdit"
 import { ToastContainer, toast } from 'react-toastify';
 function App() {
-
-
   return (
    <div className="px-4 sm:px-[5vw] md:px-[7vw]  lg:px-[10vw]">
     <ToastContainer/>
