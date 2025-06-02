@@ -53,7 +53,7 @@ const Orders = () => {
       </div>
 
       <div>
-        {orderData.slice(1, 4).map((item, index) => (
+        {orderData.map((item, index) => (
           <div
             key={index}
             className="py-4 border-t border-b text-black flex flex-col gap-4"

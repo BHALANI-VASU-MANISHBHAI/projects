@@ -13,35 +13,33 @@ const ShopContextProvider = (props) => {
   const delivery_fee = 10;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [userData, setUserData] = useState({});
-  const[isSubcriber, setIsSubscriber] = useState(false);
+  const [AllSubscribers, setSubscriberData] = useState([]);
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
-  const [token ,setToken] = useState('');
-  
+  const [token, setToken] = useState("");
+  const [Subscriber, setSubscriber] = useState(false);
+
   const navigate = useNavigate();
 
-
-// Card Functionality 
-  const addToCart =async (itemId, size) => {
-
+  // Card Functionality
+  const addToCart = async (itemId, size) => {
     let cartData = cloneDeep(cartItems);
     // check if itemId is size is select or not
     if (!size) {
       toast.error("Select Product Size");
       return;
     }
-// structer  like 
-// {
-//   id :{
-//     'M': 1,
-//     'L': 2,
-//     'XL': 3
-//   }
-// }
+    // structer  like
+    // {
+    //   id :{
+    //     'M': 1,
+    //     'L': 2,
+    //     'XL': 3
+    //   }
+    // }
     if (cartData[itemId]) {
-
       if (cartData[itemId][size]) {
         cartData[itemId][size] += 1;
       } else {
@@ -56,59 +54,64 @@ const ShopContextProvider = (props) => {
 
     setCartItems(cartData);
 
-    if(token){
-        try{
-              await axios.post(backendUrl+"/api/cart/add", {itemId,size},{headers:{token}});
-        }catch(e){
-          console.log("Error in add to cart", e);
-          toast.error("Failed to add item to cart");
-        }
+    if (token) {
+      try {
+        await axios.post(
+          backendUrl + "/api/cart/add",
+          { itemId, size },
+          { headers: { token } }
+        );
+      } catch (e) {
+        console.log("Error in add to cart", e);
+        toast.error("Failed to add item to cart");
+      }
     }
-
   };
   //--------------------GET CART COUNT--------------
   const getCartCount = () => {
     let totalCount = 0;
-    for(const items in cartItems) {
-        for(const item in cartItems[items]) {
-            try{
-              // we add all size of the item
-                // like M, L, XL
-                if(cartItems[items][item]) {
-                    totalCount += cartItems[items][item];
-                }  
-            }catch(e) {
-                console.log("Error in cart count", e);
-            }
+    for (const items in cartItems) {
+      for (const item in cartItems[items]) {
+        try {
+          // we add all size of the item
+          // like M, L, XL
+          if (cartItems[items][item]) {
+            totalCount += cartItems[items][item];
+          }
+        } catch (e) {
+          console.log("Error in cart count", e);
         }
+      }
     }
     return totalCount;
   };
 
-//using this we update the cart count and cart data
-const updateQuantity =  async ({itemId,size,quantity})=>{
-  console.log("itemId", itemId);
-  let cartData = cloneDeep(cartItems);
+  //using this we update the cart count and cart data
+  const updateQuantity = async ({ itemId, size, quantity }) => {
+    console.log("itemId", itemId);
+    let cartData = cloneDeep(cartItems);
 
-  cartData[itemId][size] = quantity;
+    cartData[itemId][size] = quantity;
 
-  setCartItems(cartData);
+    setCartItems(cartData);
 
-  if(token){
-    try{
-      await axios.post(backendUrl+"/api/cart/update", {itemId,size,quantity},{headers:{token}});
-
-    }catch(e){
-      console.log(e);
-      toast.error("Failed to update cart");
+    if (token) {
+      try {
+        await axios.post(
+          backendUrl + "/api/cart/update",
+          { itemId, size, quantity },
+          { headers: { token } }
+        );
+      } catch (e) {
+        console.log(e);
+        toast.error("Failed to update cart");
+      }
     }
-  }
+  };
 
-}
+  //get cart Amount
 
-//get cart Amount
-
-const getCartAmount =  () => {
+  const getCartAmount = () => {
     if (!products.length) {
       return 0;
     }
@@ -116,88 +119,121 @@ const getCartAmount =  () => {
     for (const items in cartItems) {
       const product = products.find((product) => product._id === items);
       for (const item in cartItems[items]) {
-       try{
+        try {
           if (cartItems[items][item]) {
             totalAmount +=
               product.price * cartItems[items][item] +
               delivery_fee * cartItems[items][item];
           }
-       }catch(e){
-        console.log("Error in cart amount", e);
-       }
+        } catch (e) {
+          console.log("Error in cart amount", e);
+        }
       }
     }
     return totalAmount;
-};
+  };
 
-const getUserCart = async(token)=>{
-   try{
-     const response = await axios.post(backendUrl+"/api/cart/get", {userId:token},{headers:{token}});
+  const getUserCart = async (token) => {
+    try {
+      const response = await axios.post(
+        backendUrl + "/api/cart/get",
+        { userId: token },
+        { headers: { token } }
+      );
 
-     if(response.data.success){
+      if (response.data.success) {
         setCartItems(response.data.cartData);
-     }
-   }catch(e){
+      }
+    } catch (e) {
       console.log("Error in get cart items", e);
       toast.error("Failed to load cart items");
-   }
-}
-
-
+    }
+  };
 
   // Fetch products from backend
-   const getProductsData = async () => {
+  const getProductsData = async () => {
     try {
-      const response = await axios.get(backendUrl+"/api/product/list")  
-      if(response.data.success){
+      const response = await axios.get(backendUrl + "/api/product/list");
+      if (response.data.success) {
         setProducts(response.data.products);
-      }else{
+      } else {
         toast.error("Failed to load products");
       }
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to load products");
     }
-  }
+  };
   const getUserData = async (token) => {
-    if(!token) {
+    if (!token) {
       return;
     }
-    try{
+    try {
       console.log("Token in getUserData:", token);
-    const response = await axios.post(
-  backendUrl + "/api/user/getdataofuser",
-  { someKey: "someValue" },  // <-- Pass as plain JS object
-  { headers: { token } }
-);
+      const response = await axios.post(
+        backendUrl + "/api/user/getdataofuser",
+        { someKey: "someValue" }, // <-- Pass as plain JS object
+        { headers: { token } }
+      );
 
       console.log("User Data Response:", response.data);
-      if(response.data.success){
+      if (response.data.success) {
         setUserData(response.data.user);
-      }else{
+      } else {
         toast.error("Failed to load user data");
       }
-    }catch(e){
+    } catch (e) {
       console.log("Error in get user data", e);
       toast.error("Failed to load user data");
     }
+  };
 
-  } 
-useEffect(() => {
-    getProductsData();
-  }, []);
-    
-
-  useEffect(()=>{
-    if(!token && localStorage.getItem('token')){
-      setToken(localStorage.getItem('token'));
-     getUserCart(localStorage.getItem('token'));
-
-      getUserData(localStorage.getItem('token'));
-    
+  const getSubscriberData = async (email) => {
+    try {
+      const response = await axios.get(
+        backendUrl + "/api/subscriber/getallsubscriber"
+      );
+      console.log("Subscriber Data Response:", response.data);
+      if (response.data.success) {
+        setSubscriberData(response.data.subscribers);
+      }
+      else {
+        toast.error("Failed to load subscribers data");
+      }
+    } catch (e) {
+      console.log("Error in get subscriber data", e);
+      toast.error("Failed to load subscribers data");
     }
-  },[])
+  };
 
+
+  useEffect(() => {
+    getProductsData();
+    getSubscriberData();
+  }, []);
+
+  useEffect(() => {
+    if (!token && localStorage.getItem("token")) {
+      setToken(localStorage.getItem("token"));
+      getUserCart(localStorage.getItem("token"));
+      getUserData(localStorage.getItem("token"));
+    }
+  }, []);
+
+useEffect(() => {
+  if (!token || !userData?.email || AllSubscribers.length === 0) return;
+
+  const isSubscribedUser = AllSubscribers.find(
+    (subscriber) => subscriber.email === userData.email
+  );
+
+  if (isSubscribedUser) {
+    setSubscriber(true);
+  } else {
+    console.log("User is not subscribed");
+    setSubscriber(false);
+  }
+}, [token, userData.email, AllSubscribers]);
 
 
   const value = {
@@ -223,6 +259,7 @@ useEffect(() => {
     getUserData,
     userData,
     setUserData,
+    Subscriber
   };
 
   return (

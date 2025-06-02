@@ -1,6 +1,31 @@
-import React from 'react'
+import React, { use, useContext } from 'react'
+import axios from 'axios';
+import { ShopContext } from '../context/ShopContext';
+import { toast } from 'react-toastify';
+
 
 const NewsLetterBox = () => {
+
+  const {backendUrl   } = useContext(ShopContext)
+ 
+  const [email, setEmail] = React.useState('');
+  
+    const handleSubscribe = async (email) => {
+      try{
+        const response = await axios.post(`${backendUrl}/api/subscriber/addsubscribe`, { email });
+        console.log('Subscription response:', response.data);
+        if (response.data.success) {
+         toast.success('Subscription successful!');
+        } else {
+          toast.error('Subscription failed: ' + response.data.message);
+        }
+      }
+      catch (error) {
+        console.error('Error subscribing:', error);
+        alert('An error occurred while subscribing.');
+      }
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault();
     }
@@ -12,8 +37,8 @@ const NewsLetterBox = () => {
         </p>
         
         <form  className='mt-5 flex items-center  sm:w-1/2 mx-auto my-6 border pl-3'  onSubmit={handleSubmit}>
-            <input className="w-full sm:flex-1 outline-none border-black"  type="email"   placeholder='Enter Your Email' />
-            <button className='bg-black text-white px-4 py-2 sm:ml-2 sm:mt-0' type='submit' >Subscribe</button>
+            <input onChange={(e)=>setEmail(e.target.value)}    className="w-full sm:flex-1 outline-none border-black"  type="email"   placeholder='Enter Your Email' />
+            <button onClick={()=>handleSubscribe(email)}  className='   bg-black text-white px-4 py-2 sm:ml-2 sm:mt-0' type='submit' >Subscribe</button>
         </form>
     </div>
   )

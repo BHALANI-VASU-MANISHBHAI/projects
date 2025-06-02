@@ -7,17 +7,26 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Rating from "@mui/material/Rating";
 import ReviewCard from "../components/ReviewCard";
+import Button from "@mui/material/Button";
+import StarLine from "../components/StarLine";
+import { assetss } from "../assets/frontend_assets/assetss";
+import Review from "../../../backend/models/reviewModel";
+import { addReview } from "../../../backend/controllers/reviewController";
 
 const Product = () => {
   const { id } = useParams();
-  const { products, currency, addToCart, backendUrl, token } = useContext(ShopContext);
+  const { products, currency, addToCart, backendUrl, token, userData } =
+    useContext(ShopContext);
 
   const [productData, setProductData] = useState(null);
-  const [userData, setUserData] = useState({ userRating: 0, comment: "" });
   const [image, setImage] = useState("");
   const [Size, setSizes] = useState("");
   const [Reviews, setReviews] = useState([]);
+  const [Ratings, setRatings] = useState();
   const [avgRating, setAvgRating] = useState(0);
+  const [addComment ,setaddComment] = useState("");
+  const[showAddReview, setShowAddReview] = useState(false);
+  const [addRating , setAddRating] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
 
   // Fetch product details from local products state
@@ -37,7 +46,9 @@ const Product = () => {
       const response = await axios.get(`${backendUrl}/api/review/get/${id}`);
       if (response.data.success) {
         setReviews(response.data.reviews);
+        // console.log(response.data.reviews);
         const ratings = response.data.reviews.map((r) => r.rating);
+        setRatings(ratings);
         const sum = ratings.reduce((acc, val) => acc + val, 0);
         const avg = ratings.length > 0 ? sum / ratings.length : 5;
         setAvgRating(avg);
@@ -46,18 +57,16 @@ const Product = () => {
         setAvgRating(0);
       }
     } catch (error) {
-      toast.error("Failed to load reviews. Please try again later.");
+      console.log("Error fetching reviews:", error);
     }
   };
 
-  // Add a new review for this product
-  const addReview = async (rating, comment) => {
+  const EditReview = async (reviewId, rating, comment) => {
     try {
-   
-      const response = await axios.post(
-        `${backendUrl}/api/review/add`,
+      const response = await axios.put(
+        `${backendUrl}/api/review/update`,
         {
-          productId: id,
+          reviewId,
           rating,
           comment,
         },
@@ -65,22 +74,69 @@ const Product = () => {
           headers: { token },
         }
       );
+
       if (response.data.success) {
-  
         fetchReviews();
-        setUserData({ userRating: 0, comment: "" }); // Reset form
       } else {
-        toast.error("Failed to add review.");
+        toast.error("Failed to edit review.");
       }
     } catch (e) {
-      toast.error("Failed to add review. Please try again later.");
+      console.log("Error editing review:", e);
+      toast.error("Failed to edit review. Please try again later.");
     }
   };
 
+  const CountRating = (rating) => {
+    let count = 0;
+    for (let i = 0; i < Reviews.length; i++) {
+      if (Reviews[i].rating === rating) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+  const AddReview = async () => {
+    try{
+      console.log("Adding review with data:")
+      const response = await axios.post(
+        `${backendUrl}/api/review/add`,
+        {
+          productId: id,
+          rating: addRating,
+          comment: addComment,
+        },
+        {
+          headers: { token },
+        }
+      );
+      console.log("Add Review Response:", response.data);
+
+    if (response.data.success) {
+      toast.success("Review added successfully!");
+      setShowAddReview(false);
+      setAddRating(0);
+      setaddComment("");
+      fetchReviews();
+    } else {
+      toast.error("Failed to add review. Please try again.");
+    }
+
+
+    }catch (error) {
+     console.log("Error adding review:", error);
+      toast.error("Failed to add review. Please try again later.");
+    }
+
+  }
+
   useEffect(() => {
     fetchProductData();
+  }, [id, products]);
+
+  useEffect(() => {
     fetchReviews();
-  }, [id, products,Reviews]);
+  }, [id, , Reviews.length]);
 
   if (!productData) return <div className="opacity-0">Loading...</div>;
 
@@ -109,14 +165,21 @@ const Product = () => {
         <div className="flex-1">
           <h1 className="font-medium text-2xl mt-2">{productData.name}</h1>
           <div className="flex items-center gap-1 mt-2">
-            <Rating name="read-only" value={avgRating} precision={0.5} readOnly />
+            <Rating
+              name="read-only"
+              value={avgRating}
+              precision={0.5}
+              readOnly
+            />
             <p className="pl-2">({avgRating.toFixed(1)})</p>
           </div>
           <p className="mt-5 text-3xl font-medium">
             {currency}
             {productData.price}
           </p>
-          <p className="text-sm text-gray-500 mt-5 md:w-4/5">{productData.description}</p>
+          <p className="text-sm text-gray-500 mt-5 md:w-4/5">
+            {productData.description}
+          </p>
           <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
             <div className="flex gap-2">
@@ -177,14 +240,14 @@ const Product = () => {
         {activeTab === "description" && (
           <div className="border border-t-0 border-gray-300 rounded-b-lg shadow-md p-6 bg-white space-y-4 text-gray-700 text-sm leading-relaxed">
             <p>
-              An e-commerce website is a platform that allows customers to buy and sell
-              products in various models like B2C, B2B, or C2C. These platforms support
-              multiple payment options including credit cards, digital wallets, and cash on
-              delivery.
+              An e-commerce website is a platform that allows customers to buy
+              and sell products in various models like B2C, B2B, or C2C. These
+              platforms support multiple payment options including credit cards,
+              digital wallets, and cash on delivery.
             </p>
             <p>
-              In short, an e-commerce website provides customers with the tools and
-              experience needed to shop online efficiently and securely.
+              In short, an e-commerce website provides customers with the tools
+              and experience needed to shop online efficiently and securely.
             </p>
           </div>
         )}
@@ -198,59 +261,119 @@ const Product = () => {
 
             {/* Review Form */}
             {token ? (
-              <div className="max-w-xl mx-auto mb-10">
-                <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
-                <div className="flex flex-col gap-3">
+              <div className="max-w-2xl  mb-10 ">
+                <div className=" ml-0 flex gap-4 md:mb-10 md:ml-8  sm:mb-7 flex-row ">
+                  <h2>Reviews</h2>
                   <Rating
-                    name="user-rating"
-                    value={userData.userRating}
-                    onChange={(event, newValue) =>
-                      setUserData((prev) => ({ ...prev, userRating: newValue }))
-                    }
+                    name="half-rating-read"
+                    value={avgRating}
+                    precision={1}
+                    readOnly
                   />
-                  <textarea
-                    className="border border-gray-300 p-2 rounded w-full text-sm"
-                    rows="4"
-                    placeholder="Write your review..."
-                    value={userData.comment}
-                    onChange={(e) =>
-                      setUserData((prev) => ({ ...prev, comment: e.target.value }))
-                    }
-                  />
-                  <button
-                    onClick={() => {
-                      if (!userData.userRating || !userData.comment) {
-                        toast.error("Please provide both rating and comment.");
-                      } else {
-                        addReview(userData.userRating, userData.comment);
-                      }
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600"
-                  >
-                    Submit Review
-                  </button>
+                  <p>{avgRating.toFixed(1)}</p>
+                  <p>{Reviews.length} Reviews</p>
                 </div>
+                {/* Average Rating and Add Review Button */}
+                <div className="flex  gap-4  ">
+                  <div className="md:flex flex-col gap-4 w-1/4 items-center justify-center  hidden ">
+                    <p className="text-xl "> {avgRating.toFixed(1)} OUT of 5</p>
+                    <button
+                      onClick={() => setShowAddReview(true)}
+                      className="bg-blue-600 py-2 rounded-xl w-[65%]"
+                    >
+                      Add Review
+                    </button>
+                  </div>
+                  <div>
+                    {[5,4,3,2,1].map((rating) => (
+                      <StarLine
+                        key={rating}
+                        LineNo={rating}
+                        totalReviews={Reviews.length}
+                        RatingCount={CountRating(rating)}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {/*Show Reviews */}
+                {Reviews.map((review) => (
+                  <ReviewCard
+                    key={review._id}
+                    review={review}
+                    userData={userData}
+                    EditReviewFun={EditReview}
+                  />
+                ))}
+
+                <div>
+                  <div className="h-[1px] w-full bg-gray-200 rounded-full"></div>
+                </div>
+                {/* Add Review Form */}
+                {showAddReview && (
+                  <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                    <div className="flex flex-col gap-4 mt-6 bg-gray-50 p-6 rounded-lg shadow-md border border-gray-200 w-[90%] sm:w-[450px]">
+                      <div className="flex flex-col gap-2 mb-2 border-b-2 border-gray-200 pb-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <p>Add a review for:</p>
+                          <img
+                            onClick={() => setShowAddReview(false)}
+                            className="w-4 h-4 cursor-pointer"
+                            src={assetss.cross_icon}
+                            alt="Close"
+                          />
+                        </div>
+                        <h2 className="text-lg font-semibold">
+                          {productData.name}
+                        </h2>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-4">
+                        <Rating
+                          name="user-rating"
+                          value={addRating}
+                          precision={1}
+                          onChange={(event, newValue) => {
+                            setAddRating(newValue);
+                          }}
+                        />
+                        <p className="text-gray-500">({addRating} Out of 5)</p>
+                      </div>
+
+                      <textarea
+                        className="w-full h-24 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Write your review here..."
+                        onChange={(e) => setaddComment(e.target.value)}
+                      ></textarea>
+
+                      <div className="flex gap-4 mt-4 justify-between">
+                        <button  onClick={()=>AddReview()}    className="bg-blue-500 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 w-[48%]">
+                          Submit Review
+                        </button>
+                        <button
+                          onClick={() => setShowAddReview(false)}
+                          className="bg-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-md w-[48%]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <p className="text-center text-gray-600">Please log in to leave a review.</p>
+              <p className="text-center text-gray-600">
+                Please log in to leave a review.
+              </p>
             )}
-
-            {/* Review List */}
-            <div className="space-y-4">
-              {Reviews.length > 0 ? (
-                Reviews.map((review) => (
-                  <ReviewCard key={review._id} review={review}   />
-                ))
-              ) : (
-                <p className="text-center text-gray-500">No reviews yet.</p>
-              )}
-            </div>
           </div>
         )}
       </div>
 
       {/* Related Products */}
-      <ReletedProducts category={productData.category} subCategory={productData.subCategory} />
+      <ReletedProducts
+        category={productData.category}
+        subCategory={productData.subCategory}
+      />
     </div>
   );
 };

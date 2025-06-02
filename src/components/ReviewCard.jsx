@@ -1,107 +1,126 @@
-import React, { useState, useContext } from "react";
+import React from 'react'
 import Rating from "@mui/material/Rating";
-import { assetss } from "../assets/frontend_assets/assetss.js";
-import axios from "axios";
-import { toast } from "react-toastify";
-import { ShopContext } from "../context/ShopContext";
-import { set } from "lodash";
+import { assetss } from '../assets/frontend_assets/assetss';
+import { ShopContext } from '../context/ShopContext';
+import { useContext } from 'react';
 
-const ReviewCard = ({ review, onEdit }) => {
-  const [editMode, setEditMode] = useState(false);
-  const [editedComment, setEditedComment] = useState(review.comment);
-  const [editedRating, setEditedRating] = useState(review.rating);
-
-  const { backendUrl, token,userData  } = useContext(ShopContext);
-
+const ReviewCard = ({review,EditReviewFun}) => {
+  const {userData} = useContext(ShopContext);
+  const [Edit, setEdit] = React.useState(false);
+  const [editedComment, setEditedComment] = React.useState("");
+  const [rating, setRating] = React.useState(review.rating || 0);
+  const [REVIEW , setREVIEW] = React.useState(review.comment || "No comment provided.");
   const isOwner = userData._id === review.userId._id;
-
-  const handleSave = async () => {
-
-    try {
-      const responce = await axios.put(
-        backendUrl + `/api/review/update/${review._id}`,
-        {
-          rating: editedRating,
-          comment: editedComment,
-        },
-        {
-          headers: {
-            token: token,
-          }
-        }
-      );
-
-      if (responce.data.success) {
-        setEditMode(false);       
-      }else{
-        toast.error("Failed to update review. Please try again.");
-
-      }
-    } catch (error) {
-      toast.error("Failed to update review. Please try again.");
-    }
-  };
-
+  console.log("isOwner", isOwner);
   return (
-    <div className="bg-[#fefefe] shadow-md border border-gray-200 rounded-xl p-6 mb-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start gap-4 mb-2">
+    <div className="flex items-center gap-4 mb-4 mt-10 sm:flex-row flex-col sm:items-start">
+      <div className={`flex items-center gap-4 self-center w-full sm:w-auto relative  ${Edit? 'self-start' : 'self-center'} `}>
         <img
-          src={assetss.profile_icon}
-          alt="User"
-          className="w-12 h-12 rounded-full border border-gray-300"
+          className="h-10 w-10 rounded-3xl"
+          src={review.userId?.profilePicture || assetss.profile_icon}
+          alt=""
         />
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <span className="font-semibold text-gray-800 text-sm ml-1">
-              {review.userId.name}
-            </span>
-            <span className="text-gray-500 text-xs">
-              {review.userId.email || "Customer"}
-            </span>
-           {isOwner&& <img
-              src={assetss.edit_icon}
-              alt="Edit"
-              className="w-5 cursor-pointer"
-              onClick={() => setEditMode(!editMode)}
-            />
-           }
-          </div>
-
-          {/* Rating */}
-          {editMode ? (
+        <div className="text-sm flex flex-col gap-1">
+          <p className="ml-1">Vasu Bhalani</p>
+          <p className="ml-1">reviewed on {new Date(review.createdAt).toLocaleDateString()}</p>
+         {!Edit&& <Rating
+            name="half-rating-read"
+            value={review.rating || 0} 
+            precision={1}
+            readOnly
+          />
+         }
+         {
+          Edit && (
             <Rating
-              name="user-rating"
-              value={editedRating}
-              onChange={(e, newValue) => setEditedRating(newValue)}
-              className="mt-1"
+              name="half-rating"
+              value={rating}
+              precision={1}
+              onChange={(event, newValue) => {
+                setRating(newValue);
+              }}
             />
-          ) : (
-            <Rating name="user-rating" value={review.rating} readOnly  className="mt-1" />
-          )}
+          )
+         }
+        </div>
+        {/* Edit icon on small screens only */}
+        <div className="ml-auto sm:hidden">
+          <img
+            className="w-5 sm:w-8 md:w-7 lg:w-6"
+            onClick={() => {
+              if(isOwner) {
+                return;
+              }
+              setEdit(!Edit);
+              if (!Edit) {
+                setEditedComment(review.comment || "No comment provided.");
+                setRating(review.rating || 0);
+              } else {
+                setEditedComment("");
+                setRating(0);
+              }
+            }}
+            src={assetss.edit_icon}
+            alt=""
+          />
         </div>
       </div>
+      <div className="sm:text-left sm:px-10 w-full">
+        {!Edit && (
+          <p className="text-gray-600">
+            {review.comment || "No comment provided."}
+          </p>
+        )}
 
-      {/* Comment */}
-      {editMode ? (
-        <div className="mt-2">
-          <textarea
-            value={editedComment}
-            onChange={(e) => setEditedComment(e.target.value)}
-            className="w-full border rounded-md p-2 text-sm"
-          />
-          <button
-            onClick={handleSave}
-            className="mt-2 px-4 py-1 bg-blue-600 text-white rounded-md text-sm"
-          >
-            Save
-          </button>
-        </div>
-      ) : (
-        <p className="text-gray-700 text-sm leading-relaxed mt-2">{review.comment}</p>
-      )}
+     {Edit && (
+  <div className="flex flex-col gap-2 w-full sm:w-auto">
+    <textarea
+      className="w-full h-[70px] min-w-[300px] border border-gray-300 rounded-lg p-2 text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+      rows={4}
+      placeholder="Edit your review here..."
+      value={editedComment}
+      onChange={(e) => setEditedComment(e.target.value)}
+    />
+    
+    <button
+      className="self-end bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-md text-sm"
+      onClick={() => {
+        console.log("Saved comment:", editedComment);
+        setEdit(false); 
+        EditReviewFun(review._id, rating , editedComment);
+      }}
+    >
+      Save
+    </button>
+  </div>
+)}
+
+      </div>
+
+      <div>
+        <img
+          className="w-5 mt-2 sm:block hidden"
+          src={assetss.edit_icon}
+          alt=""
+          onClick={() =>{
+          if(isOwner) {
+
+            setEdit(!Edit);
+            if (!Edit) {
+              setEditedComment(review.comment || "No comment provided.");
+              setRating(review.rating || 0);
+            } else {
+              setEditedComment("");
+              setRating(0);
+            }
+          }
+        }
+
+          }
+        />
+      </div>
     </div>
   );
-};
+}
 
-export default ReviewCard;
+export default ReviewCard
