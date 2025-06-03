@@ -119,10 +119,9 @@ const Product = () => {
       setaddComment("");
       fetchReviews();
     } else {
-      toast.error("Failed to add review. Please try again.");
+      toast.error(response.data.message || "Failed to add review.");
+      
     }
-
-
     }catch (error) {
      console.log("Error adding review:", error);
       toast.error("Failed to add review. Please try again later.");
@@ -270,11 +269,11 @@ const Product = () => {
                     precision={1}
                     readOnly
                   />
-                  <p>{avgRating.toFixed(1)}</p>
-                  <p>{Reviews.length} Reviews</p>
+                  <p>({avgRating.toFixed(1)})</p>
+                  <p className="">  <span className="font-bold "> {Reviews.length}</span>  <span className="text-gray-800"> Reviews</span></p>
                 </div>
                 {/* Average Rating and Add Review Button */}
-                <div className="flex  gap-4  ">
+                <div className="flex  gap-4  flex-col md:flex-row mb-6 mt-4">
                   <div className="md:flex flex-col gap-4 w-1/4 items-center justify-center  hidden ">
                     <p className="text-xl "> {avgRating.toFixed(1)} OUT of 5</p>
                     <button
@@ -294,6 +293,12 @@ const Product = () => {
                       />
                     ))}
                   </div>
+                  <button 
+                      onClick={ () => setShowAddReview(true)}
+                      className="bg-blue-600 py-2 rounded-xl md:w-[35%] sm:w-[30%] w-[50%]  md:hidden  text-white text-sm hover:bg-blue-700 "
+                    >
+                      Add Review
+                    </button>
                 </div>
                 {/*Show Reviews */}
                 {Reviews.map((review) => (

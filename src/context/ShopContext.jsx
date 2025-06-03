@@ -1,8 +1,6 @@
-import { createContext, useState, useEffect, use } from "react";
-import { products } from "../assets/frontend_assets/assetss";
+import { createContext, useState, useEffect } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import { toast } from "react-toastify";
-import { get, set } from "lodash";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -12,6 +10,7 @@ const ShopContextProvider = (props) => {
   const currency = "$";
   const delivery_fee = 10;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   const [userData, setUserData] = useState({});
   const [AllSubscribers, setSubscriberData] = useState([]);
   const [search, setSearch] = useState("");
@@ -22,18 +21,19 @@ const ShopContextProvider = (props) => {
   const [Subscriber, setSubscriber] = useState(false);
 
   const navigate = useNavigate();
-
-  // Card Functionality
+//<-------------------------------------------------- Functions --------------------------------------------------->
+  // Add item to cart
   const addToCart = async (itemId, size) => {
     let cartData = cloneDeep(cartItems);
-    // check if itemId is size is select or not
+
     if (!size) {
       toast.error("Select Product Size");
       return;
     }
-    // structer  like
+
+    // Structure:
     // {
-    //   id :{
+    //   id: {
     //     'M': 1,
     //     'L': 2,
     //     'XL': 3
@@ -46,9 +46,7 @@ const ShopContextProvider = (props) => {
         cartData[itemId][size] = 1;
       }
     } else {
-      // This is Create new item
-      cartData[itemId] = {}; // first we make empty object
-      // then we add size and quantity
+      cartData[itemId] = {};
       cartData[itemId][size] = 1;
     }
 
@@ -67,16 +65,15 @@ const ShopContextProvider = (props) => {
       }
     }
   };
-  //--------------------GET CART COUNT--------------
+
+  // Get total count of items in cart
   const getCartCount = () => {
     let totalCount = 0;
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
+    for (const itemId in cartItems) {
+      for (const size in cartItems[itemId]) {
         try {
-          // we add all size of the item
-          // like M, L, XL
-          if (cartItems[items][item]) {
-            totalCount += cartItems[items][item];
+          if (cartItems[itemId][size]) {
+            totalCount += cartItems[itemId][size];
           }
         } catch (e) {
           console.log("Error in cart count", e);
@@ -86,13 +83,10 @@ const ShopContextProvider = (props) => {
     return totalCount;
   };
 
-  //using this we update the cart count and cart data
+  // Update quantity for specific item and size
   const updateQuantity = async ({ itemId, size, quantity }) => {
-    console.log("itemId", itemId);
     let cartData = cloneDeep(cartItems);
-
     cartData[itemId][size] = quantity;
-
     setCartItems(cartData);
 
     if (token) {
@@ -109,21 +103,19 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  //get cart Amount
-
+  // Calculate total cart amount (including delivery fee)
   const getCartAmount = () => {
-    if (!products.length) {
-      return 0;
-    }
+    if (!products.length) return 0;
+
     let totalAmount = 0;
-    for (const items in cartItems) {
-      const product = products.find((product) => product._id === items);
-      for (const item in cartItems[items]) {
+    for (const itemId in cartItems) {
+      const product = products.find((product) => product._id === itemId);
+      for (const size in cartItems[itemId]) {
         try {
-          if (cartItems[items][item]) {
+          if (cartItems[itemId][size]) {
             totalAmount +=
-              product.price * cartItems[items][item] +
-              delivery_fee * cartItems[items][item];
+              product.price * cartItems[itemId][size] +
+              delivery_fee * cartItems[itemId][size];
           }
         } catch (e) {
           console.log("Error in cart amount", e);
@@ -133,6 +125,7 @@ const ShopContextProvider = (props) => {
     return totalAmount;
   };
 
+  // Fetch cart data from backend
   const getUserCart = async (token) => {
     try {
       const response = await axios.post(
@@ -164,19 +157,19 @@ const ShopContextProvider = (props) => {
       toast.error("Failed to load products");
     }
   };
+
+  // Fetch user data from backend
   const getUserData = async (token) => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
+
     try {
       console.log("Token in getUserData:", token);
       const response = await axios.post(
         backendUrl + "/api/user/getdataofuser",
-        { someKey: "someValue" }, // <-- Pass as plain JS object
+        { someKey: "someValue" },
         { headers: { token } }
       );
 
-      console.log("User Data Response:", response.data);
       if (response.data.success) {
         setUserData(response.data.user);
       } else {
@@ -188,16 +181,16 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  const getSubscriberData = async (email) => {
+  // Fetch all subscribers
+  const getSubscriberData = async () => {
     try {
       const response = await axios.get(
         backendUrl + "/api/subscriber/getallsubscriber"
       );
-      console.log("Subscriber Data Response:", response.data);
+
       if (response.data.success) {
         setSubscriberData(response.data.subscribers);
-      }
-      else {
+      } else {
         toast.error("Failed to load subscribers data");
       }
     } catch (e) {
@@ -206,36 +199,36 @@ const ShopContextProvider = (props) => {
     }
   };
 
+  //<-------------------------------------------------- useEffect Hooks -------------------------------------------------->
 
+  // Initial fetch of products and subscribers
   useEffect(() => {
     getProductsData();
     getSubscriberData();
   }, []);
 
+  // Load token from localStorage and fetch user/cart data
   useEffect(() => {
     if (!token && localStorage.getItem("token")) {
-      setToken(localStorage.getItem("token"));
-      getUserCart(localStorage.getItem("token"));
-      getUserData(localStorage.getItem("token"));
+      const savedToken = localStorage.getItem("token");
+      setToken(savedToken);
+      getUserCart(savedToken);
+      getUserData(savedToken);
     }
   }, []);
 
-useEffect(() => {
-  if (!token || !userData?.email || AllSubscribers.length === 0) return;
+  // Check if user is subscribed
+  useEffect(() => {
+    if (!token || !userData?.email || AllSubscribers.length === 0) return;
 
-  const isSubscribedUser = AllSubscribers.find(
-    (subscriber) => subscriber.email === userData.email
-  );
+    const isSubscribedUser = AllSubscribers.find(
+      (subscriber) => subscriber.email === userData.email
+    );
 
-  if (isSubscribedUser) {
-    setSubscriber(true);
-  } else {
-    console.log("User is not subscribed");
-    setSubscriber(false);
-  }
-}, [token, userData.email, AllSubscribers]);
+    setSubscriber(!!isSubscribedUser);
+  }, [token, userData.email, AllSubscribers]);
 
-
+// <-------------------------------------------------- useEffect Hooks End -------------------------------------------------->
   const value = {
     products,
     currency,
@@ -259,11 +252,13 @@ useEffect(() => {
     getUserData,
     userData,
     setUserData,
-    Subscriber
+    Subscriber,
   };
 
   return (
-    <ShopContext.Provider value={value}>{props.children}</ShopContext.Provider>
+    <ShopContext.Provider value={value}>
+      {props.children}
+    </ShopContext.Provider>
   );
 };
 

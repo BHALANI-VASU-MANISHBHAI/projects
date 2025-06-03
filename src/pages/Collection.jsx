@@ -5,6 +5,11 @@ import Title from "../components/Title";
 import ProductItem from "../components/ProductItem";
 import { useEffect } from "react";
 import SearchBar from "../components/SearchBar";
+import PriceRangeSlider from "../components/PriceRangeSlider";
+import * as noUiSlider from 'nouislider'; 
+import 'nouislider/dist/nouislider.css';
+
+
 import { filter } from "lodash";
 const Collection = () => {
   const { products, search, showSearch } = useContext(ShopContext);
@@ -13,6 +18,9 @@ const Collection = () => {
   const [category, setCategory] = React.useState([]);
   const [subCategory, setSubCategory] = React.useState([]);
   const [sortValue, setSortValue] = React.useState("relevent");
+  const [priceRange, setPriceRange] = React.useState([100, 2000]);
+
+
   
 
 
@@ -53,11 +61,13 @@ const Collection = () => {
   }
 
   // Filter by category and subCategory
-  filteredProducts = filteredProducts.filter(product => {
-    const isCategoryMatch = category.length ? category.includes(product.category) : true;
-    const isSubCategoryMatch = subCategory.length ? subCategory.includes(product.subCategory) : true;
-    return isCategoryMatch && isSubCategoryMatch;
-  });
+// Filter by category, subCategory, and price range
+filteredProducts = filteredProducts.filter(product => {
+  const isCategoryMatch = category.length ? category.includes(product.category) : true;
+  const isSubCategoryMatch = subCategory.length ? subCategory.includes(product.subCategory) : true;
+  const isPriceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
+  return isCategoryMatch && isSubCategoryMatch&& isPriceMatch;
+});
 
   // Sort based on sortValue
   if (sortValue === "low") {
@@ -71,7 +81,9 @@ const Collection = () => {
   // Finally update state once with the fully filtered and sorted list
   setFilterProduct(filteredProducts);
 
-}, [category, subCategory, products, search, showSearch, sortValue]);
+}, [category, subCategory, products, search, showSearch, sortValue, priceRange]);
+
+
 
 
   return (
@@ -163,6 +175,16 @@ const Collection = () => {
             </p>
           </div>
         </div>
+        {/*Price Filter*/}
+         <PriceRangeSlider
+  min={0}
+  max={2000}
+  onRangeChange={(range) => {
+    console.log("Parent received:", range)
+    setPriceRange(range);
+    }}
+/>
+
         {/*SubCategary END */}
       </div>
       {/*Right Side  Part Start*/}

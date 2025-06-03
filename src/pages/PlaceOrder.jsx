@@ -8,7 +8,7 @@ import cloneDeep from "lodash/cloneDeep";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Indian_Cities_In_States_JSON from "../assets/Indian_Cities_In_States_JSON.json";
-import { set } from "lodash";
+
 const PlaceOrder = () => {
   const {
     navigate,
@@ -55,7 +55,18 @@ React.useEffect(() => {
 
 }, [userData, AllSubscribers]);
 
- 
+ const isValidAddress = (state, city) => {
+  const normalizedState = state.trim().toLowerCase();
+  const normalizedCity = city.trim().toLowerCase();
+  for (const [stateKey, cities] of Object.entries(Indian_Cities_In_States_JSON)) {
+    if (stateKey.toLowerCase() === normalizedState) {
+      return cities.some(c => c.toLowerCase() === normalizedCity);
+    }
+  }
+
+  return false;
+};
+
   const onChangeHandler = (e) => {
     const name = e.target.name;
     const value = e.target.value;
@@ -65,15 +76,22 @@ React.useEffect(() => {
       [name]: value,
     }));
   };
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
-    try {
-      let orderItems = [];
-      for (const item in cartItems) {
-        for (const size in cartItems[item]) {
-          if (cartItems[item][size] > 0) {
-            const itemInfo = cloneDeep(
-              products.find((product) => product._id === item)
+    const onSubmitHandler = async (e) => {
+      e.preventDefault();
+      try {
+
+        // Validate address
+        if (!isValidAddress(formData.state, formData.city)) {
+          toast.error("Please enter a valid state and city combination.");
+          return;
+        }
+        
+        let orderItems = [];
+        for (const item in cartItems) {
+          for (const size in cartItems[item]) {
+            if (cartItems[item][size] > 0) {
+              const itemInfo = cloneDeep(
+                products.find((product) => product._id === item)
             );
             if (itemInfo) {
               itemInfo.size = size;

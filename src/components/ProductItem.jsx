@@ -4,9 +4,9 @@ import { ShopContext } from '../context/ShopContext';
 
 const ProductItem = ({ id, image, name, price }) => {
   const { currency } = useContext(ShopContext);
-
+  console.log("ProductItem", id, image, name, price, currency);
   return (
-    <Link to={`/product/${id}`} className="text-gray-700 cursor-pointer">
+<Link to={`/product/${id}`} prefetch="intent" className="text-gray-700 cursor-pointer">
         {/* ovelow hidden because image go outside in zoom */}
       <div className="overflow-hidden">
         <img

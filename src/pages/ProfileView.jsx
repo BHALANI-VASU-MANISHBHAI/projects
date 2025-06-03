@@ -1,88 +1,229 @@
-import React, { useState } from "react";
+import React, { useContext, useState, useEffect } from 'react';
+import { ShopContext } from '../context/ShopContext';
+import { assetss } from '../assets/frontend_assets/assetss';
+import axios from 'axios';
 
-const Profileview = () => {
-  const [profile, setProfile] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    phone: "1234567890",
-    address: "Surat, Gujarat",
-    password: "",
+const ProfileView = () => {
+  const { userData, token, backendUrl ,setUserData} = useContext(ShopContext);
+ 
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    gender: '',
   });
 
-  const [image, setImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("/default-avatar.png");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [profileImagePhoto, setProfileImagePhoto] = useState(''); 
 
-  const handleChange = (e) => {
+  // Handle form input change
+  const onChangeHandler = (e) => {
     const { name, value } = e.target;
-    setProfile({ ...profile, [name]: value });
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
+  // Handle form submission
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const data = new FormData();
+      data.append('firstName', formData.firstName);
+      data.append('lastName', formData.lastName);
+      data.append('email', formData.email);
+      data.append('phone', formData.phone);
+      data.append('gender', formData.gender);
+
+      if (selectedFile) {
+        data.append('profileImage', selectedFile);
+      }
+
+      const response = await axios.put(
+        `${backendUrl}/api/user/updateprofile`,
+        data,
+        {
+          headers: {
+            token: token,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      
+      setUserData(response.data.user); 
+      console.log('Profile updated successfully:', response.data);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert("Error updating profile!");
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Send `profile` and `image` to backend
-    console.log("Submitted:", profile, image);
-    alert("Profile updated (not saved to DB yet)!");
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setProfileImagePhoto(URL.createObjectURL(file)); 
   };
 
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        gender: userData.gender || '',
+      });
+
+      setProfileImagePhoto(userData.profilePhoto || assetss.default_profile); 
+    }
+  }, [userData]);
+
   return (
-    <div style={styles.container}>
-      <h2>👤 My Profile</h2>
-      <img src={previewUrl} alt="Profile" style={styles.avatar} />
-      <input type="file" accept="image/*" onChange={handleImageChange} />
+    <div>
+      {/* Header */}
+      <div className="flex justify-center items-center py-4 bg-gray-300">
+        <div className="flex flex-col items-center gap-4">
+          <h1 className="text-black md:text-4xl text-2xl">My&nbsp;Profile</h1>
+          <p className="self-center">Home / My Profile</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <label>Full Name</label>
-        <input name="fullName" value={profile.fullName} onChange={handleChange} />
+      {/* Profile Image + Form */}
+      <div className="p-6 md:px-20">
+        <div className="flex flex-col items-center gap-4 py-6">
+          <div className="relative w-20 h-20">
+            <img
+              className="w-full h-full rounded-full object-cover"
+              src={profileImagePhoto}
+              alt="Profile"
+            />
+            <label htmlFor="profileImageUpload">
+              <img
+                className="h-5 w-5 absolute bottom-0 right-0 bg-white p-[2px] rounded-full shadow border cursor-pointer"
+                src={assetss.pencile_icon}
+                alt="Edit"
+              />
+            </label>
+            <input
+              id="profileImageUpload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+          </div>
+        </div>
 
-        <label>Email</label>
-        <input name="email" value={profile.email} onChange={handleChange} />
+        <form onSubmit={onSubmitHandler} className="bg-white p-6 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* First Name */}
+            <div>
+              <label htmlFor="firstName" className="block mb-1 font-bold text-black">
+                First Name:
+              </label>
+              <input
+                required
+                id="firstName"
+                name="firstName"
+                type="text"
+                value={formData.firstName}
+                onChange={onChangeHandler}
+                placeholder="First name"
+                className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              />
+            </div>
 
-        <label>Phone</label>
-        <input name="phone" value={profile.phone} onChange={handleChange} />
+            {/* Last Name */}
+            <div>
+              <label htmlFor="lastName" className="block mb-1 font-bold text-black">
+                Last Name:
+              </label>
+              <input
+                required
+                id="lastName"
+                name="lastName"
+                type="text"
+                value={formData.lastName}
+                onChange={onChangeHandler}
+                placeholder="Last name"
+                className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              />
+            </div>
 
-        <label>Address</label>
-        <input name="address" value={profile.address} onChange={handleChange} />
+            {/* Email */}
+            <div className="col-span-1 md:col-span-2">
+              <label htmlFor="email" className="block mb-1 font-bold text-black">
+                Email:
+              </label>
+              <input
+                required
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={onChangeHandler}
+                placeholder="Email address"
+                className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              />
+            </div>
 
-        <label>New Password</label>
-        <input name="password" type="password" value={profile.password} onChange={handleChange} />
+            {/* Phone */}
+            <div className="col-span-1 md:col-span-2">
+              <label htmlFor="phone" className="block mb-1 font-bold text-black">
+                Phone:
+              </label>
+              <input
+                required
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={onChangeHandler}
+                placeholder="Phone number"
+                className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              />
+            </div>
 
-        <button type="submit">Save Changes</button>
-      </form>
+            {/* Gender */}
+            <div className="col-span-1 md:col-span-2">
+              <label htmlFor="gender" className="block mb-1 font-bold text-black">
+                Gender:
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={onChangeHandler}
+                required
+                className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            {/* Submit Button */}
+            <div className="col-span-1">
+              <button
+                type="submit"
+                className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors"
+              >
+                Update Profile
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    maxWidth: "450px",
-    margin: "30px auto",
-    padding: "20px",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-    textAlign: "center"
-  },
-  avatar: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    marginBottom: "10px"
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    textAlign: "left"
-  }
-};
-
-export default Profileview;
+export default ProfileView;

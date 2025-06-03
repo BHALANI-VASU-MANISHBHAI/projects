@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { use } from 'react'
 import Rating from "@mui/material/Rating";
 import { assetss } from '../assets/frontend_assets/assetss';
 import { ShopContext } from '../context/ShopContext';
@@ -12,17 +12,33 @@ const ReviewCard = ({review,EditReviewFun}) => {
   const [REVIEW , setREVIEW] = React.useState(review.comment || "No comment provided.");
   const isOwner = userData._id === review.userId._id;
   console.log("isOwner", isOwner);
+
+  React.useEffect(() => {
+    if (Edit) {
+      setEditedComment(review.comment || "No comment provided.");
+      setRating(review.rating || 0);
+    } else {
+      setEditedComment("");
+      setRating(0);
+    }
+  }
+  , [Edit, review]);
+
+  React.useEffect(() => {
+    console.log("Review updated:", review);
+  },[]);
   return (
-    <div className="flex items-center gap-4 mb-4 mt-10 sm:flex-row flex-col sm:items-start">
+    <div className="flex items-center gap-4 mb-4 mt-2 sm:flex-row flex-col sm:items-start border-gray-600 p-4 rounded-lg shadow-md bg-white">
       <div className={`flex items-center gap-4 self-center w-full sm:w-auto relative  ${Edit? 'self-start' : 'self-center'} `}>
+        
         <img
-          className="h-10 w-10 rounded-3xl"
-          src={review.userId?.profilePicture || assetss.profile_icon}
+          className="h-10 w-10 rounded-3xl self-start mt-2"
+          src={review.userId?.profilePhoto || assetss.profile_icon}
           alt=""
         />
         <div className="text-sm flex flex-col gap-1">
-          <p className="ml-1">Vasu Bhalani</p>
-          <p className="ml-1">reviewed on {new Date(review.createdAt).toLocaleDateString()}</p>
+          <p className="ml-1">{review.userId?.name}</p>
+          <p className="ml-1"> {new Date(review.createdAt).toLocaleDateString()}</p>
          {!Edit&& <Rating
             name="half-rating-read"
             value={review.rating || 0} 
