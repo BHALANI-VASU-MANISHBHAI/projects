@@ -1,14 +1,11 @@
 import React, { use } from 'react'
 import { useEffect } from 'react'
-import { useContext } from 'react'
-import { ShopContext } from '../context/ShopContext'
-import { assetss } from '../assets/frontend_assets/assetss'
 import Title from './Title'
 import ProductItem from './ProductItem'
-import { useParams } from 'react-router-dom'
+import { ProductContext } from "../context/ProductContext.jsx";
 
 const ReletedProducts = ({category,subCategory}) => {
-  const{products} = React.useContext(ShopContext)
+  const{products} = React.useContext(ProductContext )
   const[releted , setReleted] = React.useState([])
 
   useEffect(() => {

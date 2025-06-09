@@ -1,11 +1,14 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { ShopContext } from '../context/ShopContext';
+import  { useContext, useState, useEffect } from 'react';
 import { assetss } from '../assets/frontend_assets/assetss';
 import axios from 'axios';
+import imageCompression from 'browser-image-compression';
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { UserContext } from "../context/UserContext.jsx";
+
 
 const ProfileView = () => {
-  const { userData, token, backendUrl ,setUserData} = useContext(ShopContext);
- 
+  const {userData ,setUserData} = useContext(UserContext);
+  const { token, backendUrl } = useContext(GlobalContext);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -13,11 +16,10 @@ const ProfileView = () => {
     phone: '',
     gender: '',
   });
-
   const [selectedFile, setSelectedFile] = useState(null);
-  const [profileImagePhoto, setProfileImagePhoto] = useState(''); 
+  const [profileImagePhoto, setProfileImagePhoto] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Handle form input change
   const onChangeHandler = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -26,9 +28,10 @@ const ProfileView = () => {
     }));
   };
 
-  // Handle form submission
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
       const data = new FormData();
       data.append('firstName', formData.firstName);
@@ -46,28 +49,40 @@ const ProfileView = () => {
         data,
         {
           headers: {
-            token: token,
+            token,
             'Content-Type': 'multipart/form-data',
           },
+          timeout: 10000, 
         }
       );
-      
-      setUserData(response.data.user); 
-      console.log('Profile updated successfully:', response.data);
-      alert("Profile updated successfully!");
+
+      setUserData(response.data.user);
+      alert(' Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert("Error updating profile!");
+      alert(' Error updating profile. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setSelectedFile(file);
-    setProfileImagePhoto(URL.createObjectURL(file)); 
+    try {
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      });
+
+      setSelectedFile(compressedFile);
+      setProfileImagePhoto(URL.createObjectURL(compressedFile));
+    } catch (error) {
+      console.error('Image compression error:', error);
+      alert(' Failed to process image.');
+    }
   };
 
   useEffect(() => {
@@ -80,7 +95,7 @@ const ProfileView = () => {
         gender: userData.gender || '',
       });
 
-      setProfileImagePhoto(userData.profilePhoto || assetss.default_profile); 
+      setProfileImagePhoto(userData.profilePhoto || assetss.default_profile);
     }
   }, [userData]);
 
@@ -166,10 +181,12 @@ const ProfileView = () => {
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
-                onChange={onChangeHandler}
+                
+                value={userData.email || formData.email}
+                disabled
                 placeholder="Email address"
                 className="border border-gray-300 py-1.5 px-3.5 rounded-md w-full"
+              
               />
             </div>
 
@@ -214,9 +231,12 @@ const ProfileView = () => {
             <div className="col-span-1">
               <button
                 type="submit"
-                className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors"
+                className={`${
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-800'
+                } text-white py-2 px-4 rounded-md transition-colors`}
+                disabled={loading}
               >
-                Update Profile
+                {loading ? 'Updating...' : 'Update Profile'}
               </button>
             </div>
           </div>

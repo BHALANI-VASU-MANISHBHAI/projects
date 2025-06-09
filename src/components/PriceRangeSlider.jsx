@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import  { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Slider,
@@ -7,7 +7,8 @@ import {
   Stack,
   Divider
 } from "@mui/material";
-import { debounce } from "lodash";
+import debounce from 'lodash-es/debounce';
+
 
 const PriceRangeSlider = ({ min = 0, max = 2000, onRangeChange }) => {
   const minDistance = 10;

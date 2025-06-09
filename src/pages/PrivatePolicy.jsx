@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Paper, Divider, Link, useTheme, useMediaQuery } from "@mui/material";
 import Title from "../components/Title";
 import { PrivacyTip, Security, Cookie, Email, Settings } from "@mui/icons-material";

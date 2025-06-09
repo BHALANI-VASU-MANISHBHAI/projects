@@ -1,6 +1,5 @@
-import React from 'react'
-import { assetss } from '../assets/frontend_assets/assetss'
-import { Link } from 'react-router-dom'
+import { assetss } from "../assets/frontend_assets/assetss";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -11,29 +10,29 @@ const Footer = () => {
         <div>
           <img src={assetss.logo} className="mb-5 w-32" alt="" />
           <p className="w-full md:w-2/3 text-gray-600">
-              Thousands of customers trust us for stylish and comfortable clothing that fits their budget. We are committed to offering quality apparel that lasts and keeps you looking your best every day.
+            Thousands of customers trust us for stylish and comfortable clothing
+            that fits their budget. We are committed to offering quality apparel
+            that lasts and keeps you looking your best every day.
           </p>
         </div>
 
-      <div>
-  <p className="text-xl font-medium mb-5">COMPANY</p>
-  <ul className="flex flex-col gap-2 text-gray-600">
-    <Link to="/" prefetch="intent">
-      <li>Home</li>
-    </Link>
-    <Link to="/about" prefetch="intent">
-      <li>About Us</li>
-    </Link>
-    <Link to="/contact" prefetch="intent">
-      <li>Contact us</li>
-    </Link>
-    <Link to="/privacy-policy" prefetch="intent">
-      <li>Privacy Policy</li>
-    </Link>
-  </ul>
-</div>
-
-
+        <div>
+          <p className="text-xl font-medium mb-5">COMPANY</p>
+          <ul className="flex flex-col gap-2 text-gray-600">
+            <Link to="/" prefetch="intent">
+              <li>Home</li>
+            </Link>
+            <Link to="/about" prefetch="intent">
+              <li>About Us</li>
+            </Link>
+            <Link to="/contact" prefetch="intent">
+              <li>Contact us</li>
+            </Link>
+            <Link to="/privacy-policy" prefetch="intent">
+              <li>Privacy Policy</li>
+            </Link>
+          </ul>
+        </div>
         <div>
           <p className="text-xl font-medium mb-5">CONTACT</p>
           <ul className="flex flex-col gap-2 text-gray-600">
@@ -50,6 +49,6 @@ const Footer = () => {
       </div>
     </div>
   );
-}
+};
 
-export default Footer
+export default Footer;

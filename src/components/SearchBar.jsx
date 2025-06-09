@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react'
 import { useContext } from 'react'
 import { assetss } from '../assets/frontend_assets/assetss';
-import { ShopContext } from '../context/ShopContext';
 import { useLocation } from 'react-router-dom';
+import { GlobalContext } from "../context/GlobalContext.jsx";
+
+
 
 const SearchBar = () => {
   const location = useLocation();
-  const { search, setSearch, showSearch, setShowSearch } = useContext(ShopContext);
+  const { search, setSearch, showSearch, setShowSearch } = useContext(GlobalContext);
   const [visible, setVisible] = React.useState(false);
 
   useEffect(() => {

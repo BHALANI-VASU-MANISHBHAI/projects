@@ -1,14 +1,17 @@
 import React from "react";
 import { useState } from "react";
-import { ShopContext } from "../context/ShopContext";
-import { useContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { UserContext } from "../context/UserContext.jsx";
+import { GoogleLogin } from '@react-oauth/google';
+
 
 const Login = () => {
   const [currentState, setCurrentState] = React.useState("Login");
-  const { token, setToken, navigate, backendUrl, userData,setUserData } =
-    React.useContext(ShopContext);
+  const { token, setToken, navigate, backendUrl}=
+    React.useContext(GlobalContext);
+  const { setUserData } = React.useContext(UserContext);
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +34,22 @@ const Login = () => {
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem("token", response.data.token);
-          toast.success("Successfully signed up");
+
+          const profileResponse = await axios.post(
+            backendUrl + "/api/user/getdataofuser",
+            {}, // request body, if any
+            {
+              headers: {
+                token: response.data.token, // pass the token in headers
+              },
+            }
+          );
+ 
+          if (profileResponse.data.success) {
+     ;
+            setUserData(profileResponse.data.user);
+          }
+          // setUserData(response.data.user);
         } else {
           toast.error(response.data.message || "Failed to sign up");
         }
@@ -41,7 +59,7 @@ const Login = () => {
           password,
         });
         if (response.data.success) {
-          console.log("Login response", response.data);
+
           setToken(response.data.token);
 
           const profileResponse = await axios.post(
@@ -54,9 +72,9 @@ const Login = () => {
             }
           );
 
-          console.log("Profile response", profileResponse.data);
+      
           if (profileResponse.data.success) {
-            console.log("User data", profileResponse.data.user);
+    
            setUserData(profileResponse.data.user);
           }
           localStorage.setItem("token", response.data.token);
@@ -131,6 +149,38 @@ const Login = () => {
       toast.error(error.message || "Password reset error");
     }
   };
+
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+  try {
+    const token = credentialResponse.credential;
+    console.log("Google token:", token);
+    // Send this token to your backend to verify and login/register the user
+    const res = await axios.post(backendUrl + "/api/user/google", { token });
+
+    if (res.data.success) {
+      setToken(res.data.token);
+      localStorage.setItem("token", res.data.token);
+
+      // Get user profile data from backend
+      const profileResponse = await axios.post(
+        backendUrl + "/api/user/getdataofuser",
+        {},
+        { headers: { token: res.data.token } }
+      );
+
+      if (profileResponse.data.success) {
+        setUserData(profileResponse.data.user);
+
+      }
+    } else {
+      toast.error(res.data.message || "Google login failed");
+    }
+  } catch (error) {
+    console.error("Google login error:", error);
+    toast.error("Google login error");
+  }
+};
+
 
   // Redirect to home page after successful login/signup
   React.useEffect(() => {
@@ -252,9 +302,19 @@ const Login = () => {
             </p>
           )}
         </div>
-        <button className="bg-black text-white font-light px-8 py-2 mt-4">
+        <button className="bg-black text-white font-light px-8 py-1 mt-4">
           {currentState == "Login" ? "Login" : "Sign up"}
         </button>
+        <h2>or</h2>
+        <div className=" flex justify-center">
+        {  
+  <GoogleLogin
+    onSuccess={handleGoogleLoginSuccess}
+    onError={() => toast.error("Google login failed")}
+  />
+        }
+</div>
+
       </form>
     </>
   );

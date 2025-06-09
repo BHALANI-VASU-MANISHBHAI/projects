@@ -1,22 +1,27 @@
-import React, { useEffect, useContext, useState } from "react";
+import  { useEffect, useContext, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ShopContext } from "../context/ShopContext";
+
 import ReletedProducts from "../components/ReletedProducts";
 import Title from "../components/Title";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Rating from "@mui/material/Rating";
 import ReviewCard from "../components/ReviewCard";
-import Button from "@mui/material/Button";
 import StarLine from "../components/StarLine";
 import { assetss } from "../assets/frontend_assets/assetss";
-import Review from "../../../backend/models/reviewModel";
-import { addReview } from "../../../backend/controllers/reviewController";
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { CartContext } from "../context/CartContext.jsx";
+import { UserContext } from "../context/UserContext.jsx";
+import { ProductContext } from "../context/ProductContext.jsx";
+
 
 const Product = () => {
+  //  products, currency, addToCart, backendUrl, token, userData 
   const { id } = useParams();
-  const { products, currency, addToCart, backendUrl, token, userData } =
-    useContext(ShopContext);
+  const {products} = useContext(ProductContext);
+  const {addToCart} = useContext(CartContext);
+  const{userData} = useContext(UserContext);
+  const { backendUrl, token, currency } = useContext(GlobalContext);
 
   const [productData, setProductData] = useState(null);
   const [image, setImage] = useState("");
@@ -46,7 +51,7 @@ const Product = () => {
       const response = await axios.get(`${backendUrl}/api/review/get/${id}`);
       if (response.data.success) {
         setReviews(response.data.reviews);
-        // console.log(response.data.reviews);
+ 
         const ratings = response.data.reviews.map((r) => r.rating);
         setRatings(ratings);
         const sum = ratings.reduce((acc, val) => acc + val, 0);
@@ -98,7 +103,7 @@ const Product = () => {
 
   const AddReview = async () => {
     try{
-      console.log("Adding review with data:")
+
       const response = await axios.post(
         `${backendUrl}/api/review/add`,
         {
@@ -110,10 +115,9 @@ const Product = () => {
           headers: { token },
         }
       );
-      console.log("Add Review Response:", response.data);
+ 
 
     if (response.data.success) {
-      toast.success("Review added successfully!");
       setShowAddReview(false);
       setAddRating(0);
       setaddComment("");
@@ -144,7 +148,7 @@ const Product = () => {
       <div className="flex gap-12 sm:gap-12 flex-col sm:flex-row">
         {/* Images */}
         <div className="flex-1 flex flex-col-reverse gap-3 sm:flex-row">
-          <div className="flex thumbnails sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-center sm:w-[18.7%] w-full flex-shrink-0 cursor-pointer">
+          <div className="flex thumbnails sm:flex-col overflow-x-auto sm:overflow-y-scroll   sm:w-[18.7%] w-full flex-shrink-0 cursor-pointer">
             {productData.image.map((item, index) => (
               <img
                 key={index}

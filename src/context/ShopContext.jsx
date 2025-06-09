@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import cloneDeep from "lodash/cloneDeep";
+import cloneDeep from "lodash-es/cloneDeep";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -182,29 +182,14 @@ const ShopContextProvider = (props) => {
   };
 
   // Fetch all subscribers
-  const getSubscriberData = async () => {
-    try {
-      const response = await axios.get(
-        backendUrl + "/api/subscriber/getallsubscriber"
-      );
 
-      if (response.data.success) {
-        setSubscriberData(response.data.subscribers);
-      } else {
-        toast.error("Failed to load subscribers data");
-      }
-    } catch (e) {
-      console.log("Error in get subscriber data", e);
-      toast.error("Failed to load subscribers data");
-    }
-  };
 
   //<-------------------------------------------------- useEffect Hooks -------------------------------------------------->
 
   // Initial fetch of products and subscribers
   useEffect(() => {
     getProductsData();
-    getSubscriberData();
+
   }, []);
 
   // Load token from localStorage and fetch user/cart data
@@ -217,17 +202,7 @@ const ShopContextProvider = (props) => {
     }
   }, []);
 
-  // Check if user is subscribed
-  useEffect(() => {
-    if (!token || !userData?.email || AllSubscribers.length === 0) return;
-
-    const isSubscribedUser = AllSubscribers.find(
-      (subscriber) => subscriber.email === userData.email
-    );
-
-    setSubscriber(!!isSubscribedUser);
-  }, [token, userData.email, AllSubscribers]);
-
+  
 // <-------------------------------------------------- useEffect Hooks End -------------------------------------------------->
   const value = {
     products,

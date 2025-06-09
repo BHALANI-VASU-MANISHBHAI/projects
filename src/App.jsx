@@ -11,10 +11,11 @@ import PlaceOrder from "./pages/PlaceOrder"
 import Orders from "./pages/Orders"
 import Footer from "./components/Footer"
 import SearchBar from "./components/SearchBar"
-
 import PrivacyPolicy from "./pages/PrivatePolicy"
 import ProfileView from "./pages/ProfileView"
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+
+
 function App() {
   return (
    <div className="px-4 sm:px-[5vw] md:px-[7vw]  lg:px-[10vw]">

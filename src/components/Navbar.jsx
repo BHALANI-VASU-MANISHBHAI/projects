@@ -1,15 +1,26 @@
-import React, { use, useState } from 'react';
+import  {  useState } from 'react';
 import { assets } from "../assets/admin_assets/assets";
 import { assetss } from "../assets/frontend_assets/assetss";
 import { Link, NavLink } from 'react-router-dom';
 import { useContext } from 'react';
-import { ShopContext } from '../context/ShopContext';
 import { useEffect } from 'react';
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { CartContext } from "../context/CartContext.jsx";
+import { UserContext } from "../context/UserContext.jsx";
+
+
 
 const Navbar = () => {
-  const { setShowSearch ,getCartCount , navigate , setToken , setCartItems,token,userData,setUserData} = useContext(ShopContext);
+  //setShowSearch ,getCartCount , navigate , setToken , setCartItems,token,userData,setUserData
+  const {setShowSearch, setToken, token,navigate} = useContext(GlobalContext);
+  const { getCartCount, setCartItems } = useContext(CartContext);
+  const { userData, setUserData } = useContext(UserContext);
+    
   const [visible, setVisible] = useState(false);
 
+useEffect(() => {
+  console.log("Profile Photo URL:", userData.profilePhoto);
+}, [userData.profilePhoto]);
 
 const  logout = () => {
   setToken('');
@@ -68,8 +79,8 @@ useEffect(() => {
   onClick={() => token ? null : navigate('/login')} 
   src={
     userData.profilePhoto
-      ? `${userData.profilePhoto}?t=${userData.updatedAt || Date.now()}`
-      : assetss.profile_icon
+      ? userData.profilePhoto
+      : "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png"
   } 
   alt="profile" 
   className={`cursor-pointer rounded-full ${userData.profilePhoto ? 'w-7 h-7' : 'w-5 h-5'}`} 

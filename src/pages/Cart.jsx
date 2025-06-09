@@ -1,18 +1,21 @@
   import { useContext, useState } from "react";
-  import { ShopContext } from "./../context/ShopContext";
-
   import Title from "./../components/Title";
   import { useEffect } from "react";
-  import Product from "./Product";
   import { assetss } from "./../assets/frontend_assets/assetss";
   import CartTotal from "../components/CartTotal";
-import { get } from "lodash";
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { CartContext } from "../context/CartContext.jsx";
+import { ProductContext } from "../context/ProductContext.jsx";
+
 
   const Cart = () => {
-    const { products, currency, cartItems, updateQuantity,navigate ,getCartCount } =
-      useContext(ShopContext);
-
+    // products, currency, cartItems, updateQuantity,navigate ,getCartCount
+    const { currency, navigate} = useContext(GlobalContext);
+    const { cartItems, updateQuantity, getCartCount } = useContext(CartContext);
+    const { products } = useContext(ProductContext);
+    // console.log("cartItems", cartItems);
     const [cartData, setCartData] = useState([]);
+    // console.log("cartData", cartData);
 // this is because may be products is not loaded yet.
     useEffect(() => {
  if(products.length>0){
@@ -29,6 +32,8 @@ import { get } from "lodash";
         }
       }
       setCartData(tempdata);
+      const cartCount = getCartCount();
+      console.log("cartCount", cartCount);
     }
     }, [cartItems, products]);
 

@@ -1,4 +1,3 @@
-import React from 'react'
 
 const StarLine = ({LineNo,totalReviews,RatingCount}) => {
     // Calculate the percentage of reviews for the given rating

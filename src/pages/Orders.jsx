@@ -1,13 +1,15 @@
 import React from 'react'
 import { useContext } from 'react'
-import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title'
 import { useEffect } from 'react'
-import axios, { all } from 'axios'
+import axios from 'axios'
+import { GlobalContext } from "../context/GlobalContext.jsx";
+
+
 
 
 const Orders = () => {
-  const { backendUrl,token, currency } = useContext(ShopContext)
+  const { backendUrl,token, currency } = useContext(GlobalContext);
   
   const [orderData, setOrderData] = React.useState([]);
  
@@ -18,8 +20,6 @@ const Orders = () => {
       }
 
     const  responce = await  axios.post(backendUrl+"/api/order/userorders",{},{headers:{token}})   
-    console.log("responce ",responce);
-
     if(responce.data.success){
       let allOrdersItem =[]
       responce.data.orders.map((order)=>{

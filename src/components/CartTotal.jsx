@@ -1,17 +1,21 @@
-import React, { use, useEffect } from 'react'
+import React, {  useEffect } from 'react'
 import { useContext } from 'react'
-import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
-import { get } from 'lodash';
+import { GlobalContext } from "../context/GlobalContext.jsx";
+import { CartContext } from "../context/CartContext.jsx";
+
 
 
 const CartTotal = ({IsSubcriberornot}) => {
-    const {currency , delivery_fee,getCartAmount,getCartCount ,userData} = useContext(ShopContext);
-  console.log("IsSubcriberornot",IsSubcriberornot);
+    const {currency , delivery_fee} = useContext(GlobalContext);
+    const { getCartCount, getCartAmount } = useContext(CartContext);
+
     const [actualAmount, setActualAmount] = React.useState(0);
 
-    
+
  useEffect(() => {
+  console.log("CartCount", getCartCount());
+  console.log("CartAmount", getCartAmount());
     if (getCartCount() > 0) {
       setActualAmount(getCartAmount() + delivery_fee - (IsSubcriberornot ? getCartAmount() * 0.2 : 0));
     } else {

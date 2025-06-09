@@ -1,12 +1,12 @@
 import React, { use, useContext } from 'react'
 import axios from 'axios';
-import { ShopContext } from '../context/ShopContext';
 import { toast } from 'react-toastify';
+import { GlobalContext } from "../context/GlobalContext.jsx";
 
 
 const NewsLetterBox = () => {
 
-  const {backendUrl   } = useContext(ShopContext)
+  const {backendUrl} = useContext(GlobalContext);
  
   const [email, setEmail] = React.useState('');
   
