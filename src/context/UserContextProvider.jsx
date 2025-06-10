@@ -38,7 +38,7 @@ const UserContextProvider = ({ children }) => {
     if (token) {
       getUserData(token);
     }
-  }, [token, backendUrl]);
+  }, [token]);
 
   const value = {
     userData,

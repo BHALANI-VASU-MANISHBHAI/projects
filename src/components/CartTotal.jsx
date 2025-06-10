@@ -14,8 +14,6 @@ const CartTotal = ({IsSubcriberornot}) => {
 
 
  useEffect(() => {
-  console.log("CartCount", getCartCount());
-  console.log("CartAmount", getCartAmount());
     if (getCartCount() > 0) {
       setActualAmount(getCartAmount() + delivery_fee - (IsSubcriberornot ? getCartAmount() * 0.2 : 0));
     } else {

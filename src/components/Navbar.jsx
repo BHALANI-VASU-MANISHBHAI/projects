@@ -7,21 +7,18 @@ import { useEffect } from 'react';
 import { GlobalContext } from "../context/GlobalContext.jsx";
 import { CartContext } from "../context/CartContext.jsx";
 import { UserContext } from "../context/UserContext.jsx";
+import { useLocation } from 'react-router-dom';
 
 
 
 const Navbar = () => {
+  const location = useLocation();
   //setShowSearch ,getCartCount , navigate , setToken , setCartItems,token,userData,setUserData
   const {setShowSearch, setToken, token,navigate} = useContext(GlobalContext);
   const { getCartCount, setCartItems } = useContext(CartContext);
   const { userData, setUserData } = useContext(UserContext);
     
   const [visible, setVisible] = useState(false);
-
-useEffect(() => {
-  console.log("Profile Photo URL:", userData.profilePhoto);
-}, [userData.profilePhoto]);
-
 const  logout = () => {
   setToken('');
   localStorage.removeItem('token');
@@ -30,16 +27,14 @@ const  logout = () => {
   navigate('/login');
 }
  
-useEffect(() => {
-  
-}, [token]);
+
 
   return (
     <div className='flex justify-between items-center py-4'>
 <Link to='/'>
   <div className="w-32 aspect-[16/5] relative">
     <img 
-      src={assets.logo} 
+      src={assetss.logo} 
       alt="logo" 
       className="absolute inset-0 w-full h-full object-contain"
     />
@@ -70,7 +65,10 @@ useEffect(() => {
       {/* Icons Section */}
       <div className='flex gap-5 items-center'>
 
-        <img  onClick={(e)=>setShowSearch(true)}  src={assetss.search_icon} alt="search" className='w-5 h-5 cursor-pointer' />
+        <img  onClick={(e)=>
+        location.pathname !== '/collection' ? setShowSearch(false) :
+        setShowSearch(true)
+        }  src={assetss.search_icon} alt="search" className='w-5 h-5 cursor-pointer' />
 
         {/* Profile Dropdown */}
         <div className='group relative'>

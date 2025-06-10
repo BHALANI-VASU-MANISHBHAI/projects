@@ -22,6 +22,12 @@ const PlaceOrder = () => {
   const [Subscriber, setSubscriber] = React.useState(false);
   const [method, setMethod] = React.useState("cod");
   const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY;
+   // OTP-related state
+  const [otpSessionId, setOtpSessionId] = React.useState(null);
+  const [otpInput, setOtpInput] = React.useState("");
+  const [otpVerified, setOtpVerified] = React.useState(false);
+  const [otpSent, setOtpSent] = React.useState(false);
+  const [otpLoading, setOtpLoading] = React.useState(false);
 
   const [formData, setFormData] = React.useState({
     firstName: "",
@@ -33,6 +39,7 @@ const PlaceOrder = () => {
     zipcode: "",
     country: "",
     phone: "",
+
   });
 
   // ✅ Load Razorpay only when needed
@@ -48,6 +55,58 @@ const PlaceOrder = () => {
       document.body.appendChild(script);
     });
   };
+    const sendOtp = async () => {
+    if (!formData.phone) {
+      toast.error("Please enter phone number");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/auth/phone-otp`,
+        { phone: formData.phone },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        setOtpSessionId(response.data.sessionId);
+        setOtpSent(true);
+        toast.success("OTP sent to your phone");
+      } else {
+        toast.error("Failed to send OTP");
+      }
+    } catch (error) {
+      toast.error("Error sending OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verify OTP function
+  const verifyOtp = async () => {
+    if (!otpInput) {
+      toast.error("Please enter OTP");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/auth/verify-phone-otp`,
+        { sessionId: otpSessionId, otp: otpInput },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        setOtpVerified(true);
+        toast.success("OTP verified successfully");
+      } else {
+        toast.error("Invalid OTP");
+      }
+    } catch (error) {
+      toast.error("Error verifying OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
 
   React.useEffect(() => {
     const checkSubscriber = async () => {
@@ -85,6 +144,13 @@ const PlaceOrder = () => {
       ...prevData,
       [name]: value,
     }));
+
+    if(name=='phone' && otpVerified) {
+      // Reset OTP state if phone number changes after verification
+      setOtpSent(false);
+      setOtpVerified(false);
+      setOtpInput("");
+    }
   };
 
   const onSubmitHandler = async (e) => {
@@ -242,7 +308,43 @@ const PlaceOrder = () => {
         </div>
 
         <input required name="phone" value={formData.phone} onChange={onChangeHandler} placeholder="Phone" type="number" className="border py-1.5 px-3.5 rounded-md w-full" />
+         {!otpSent && (
+          <button
+            type="button"
+            onClick={sendOtp}
+            disabled={otpLoading || !formData.phone}
+            className="mt-2 bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            {otpLoading ? "Sending OTP..." : "Send OTP"}
+          </button>
+        )}
+
+
+        {otpSent && !otpVerified && (
+          <>
+            <input
+              type="text"
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value)}
+              placeholder="Enter OTP"
+              className="border py-1.5 px-3.5 rounded-md w-full mt-2"
+            />
+            <button
+              type="button"
+              onClick={verifyOtp}
+              disabled={otpLoading}
+              className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
+            >
+              {otpLoading ? "Verifying..." : "Verify OTP"}
+            </button>
+          </>
+        )}
+
+        {otpVerified && (
+          <p className="text-green-600 mt-2">Phone number verified ✅</p>
+        )}
       </div>
+      
 
       {/* Right Section */}
       <div className="mt-8">

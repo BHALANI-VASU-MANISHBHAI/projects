@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const GlobalContextProvider = ({ children }) => {
   const [token, setToken] = useState("");
 
-  const currency = "$";
+  const currency = "₹"; // Indian Rupee
   const delivery_fee = 10;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 

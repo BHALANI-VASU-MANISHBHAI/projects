@@ -242,15 +242,9 @@ const Product = () => {
         {/* Description Panel */}
         {activeTab === "description" && (
           <div className="border border-t-0 border-gray-300 rounded-b-lg shadow-md p-6 bg-white space-y-4 text-gray-700 text-sm leading-relaxed">
+            
             <p>
-              An e-commerce website is a platform that allows customers to buy
-              and sell products in various models like B2C, B2B, or C2C. These
-              platforms support multiple payment options including credit cards,
-              digital wallets, and cash on delivery.
-            </p>
-            <p>
-              In short, an e-commerce website provides customers with the tools
-              and experience needed to shop online efficiently and securely.
+             {productData.description}
             </p>
           </div>
         )}

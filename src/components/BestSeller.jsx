@@ -12,6 +12,7 @@ const BestSeller = () => {
   useEffect(() => {
     setTimeout(() => {
     const bestProducts = products.filter(item => item.bestseller === true);
+    console.log("Best Seller Products:", bestProducts);
     const countToShow = Math.max(4, Math.min(6, bestProducts.length));
     setBestSellerProducts(bestProducts.slice(0, countToShow));
     setLoading(false);
