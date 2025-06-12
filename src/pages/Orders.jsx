@@ -20,10 +20,14 @@ const Orders = () => {
       }
 
     const  responce = await  axios.post(backendUrl+"/api/order/userorders",{},{headers:{token}})   
+
+      console.log("Response from loadOrderData:", responce.data);
+
     if(responce.data.success){
       let allOrdersItem =[]
       responce.data.orders.map((order)=>{
         order.items.map((item)=>{
+           item['orderId'] = order._id;
            item['status'] = order.status;
            item['payment'] = order.payment;
            item['paymentMethod'] = order.paymentMethod;
@@ -31,8 +35,8 @@ const Orders = () => {
            allOrdersItem.push(item);
         })
       })
-  
       setOrderData(allOrdersItem.reverse());
+      console.log("Order data loaded successfully:", allOrdersItem);
     }
     }catch(err){
       console.error("Error loading order data:", err);
@@ -40,7 +44,29 @@ const Orders = () => {
     }
   }
 
+  const CancelOrder = async (orderId,size, itemId) => {
+      console.log("Cancelling order with ID:", orderId);
+    try {
+      console.log("Cancelling order with ID:", orderId, "Size:", size, "Item ID:", itemId);
+      const response = await axios.post(
+        backendUrl + "/api/order/cancel",
+        { orderId 
+          ,size,
+          itemId
+        },
+        { headers: { token } }
+      );
 
+      if (response.data.success) {
+        console.log("Order cancelled successfully");
+        loadOrderData(); // Reload order data after cancellation
+      } else {
+        console.error("Failed to cancel order:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+    }
+  }
 
   useEffect(() => {
       loadOrderData();
@@ -95,8 +121,11 @@ const Orders = () => {
                 <p className="text-sm md:text-base">{item.status}</p>
               </div>
 
-              <button  onClick={()=>  loadOrderData()} className="border py-4 px-2 text-sm font-medium rounded-sm">
+              <button  onClick={()=>  loadOrderData()} className="border py-4 px-2 text-sm font-medium rounded-sm cursor-pointer ">
                 Track Order
+              </button>
+              <button  onClick={()=>  CancelOrder(item.orderId,item.size,item._id)} className="border py-4 px-2 text-sm font-medium rounded-sm cursor-pointer ">
+                Cancel Order
               </button>
             </div>
           </div>

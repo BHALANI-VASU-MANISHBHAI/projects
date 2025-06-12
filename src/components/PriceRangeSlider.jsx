@@ -93,7 +93,7 @@ const PriceRangeSlider = ({ min = 0, max = 2000, onRangeChange }) => {
         </Button> 
           {/* //small text */}
        <Typography variant="caption" sx={{ color: "#777" }}>
-  Range: ${value[0]} - ${value[1]}
+  Range: ₹  {value[0]} - ${value[1]}
 </Typography>
 
       </Stack>

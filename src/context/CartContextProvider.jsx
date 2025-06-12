@@ -6,8 +6,6 @@ import { GlobalContext } from "./GlobalContext";
 import { ProductContext } from "./ProductContext";
 import { CartContext } from "./CartContext";
 
-
-
 const CartContextProvider = ({ children }) => {
   const { backendUrl, token } = useContext(GlobalContext);
   const {products} = useContext(ProductContext);
@@ -36,7 +34,7 @@ const CartContextProvider = ({ children }) => {
     }; 
     fetchCart();
   
-  }, [token,cartItems]);
+  }, [token]);
 
   const addToCart = async (itemId, size) => {
     let cartData = cloneDeep(cartItems);
