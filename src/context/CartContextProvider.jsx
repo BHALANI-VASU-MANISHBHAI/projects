@@ -96,7 +96,6 @@ const CartContextProvider = ({ children }) => {
     }
   };
 
-  // Dummy price calculation (requires products data passed somehow)
   const getCartAmount = () => {
    if (!products.length) return 0;
 
@@ -107,7 +106,7 @@ const CartContextProvider = ({ children }) => {
         try {
           if (cartItems[itemId][size]) {
             totalAmount +=
-              product.price * cartItems[itemId][size] 
+              product.price * cartItems[itemId][size] *(product.discount ? (1 - product.discount / 100) : 1);
           }
         } catch (e) {
           console.log("Error in cart amount", e);

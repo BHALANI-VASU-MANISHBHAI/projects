@@ -1,80 +1,134 @@
-import React from 'react'
-import { useContext } from 'react'
-import Title from '../components/Title'
-import { useEffect } from 'react'
-import axios from 'axios'
+import React, { useContext, useEffect, useState } from "react";
+import Title from "../components/Title";
+import axios from "axios";
 import { GlobalContext } from "../context/GlobalContext.jsx";
-
-
-
+import socket from "../services/sockets.jsx";
+import { UserContext } from "../context/UserContext.jsx";
+import { toast } from "react-toastify";
 
 const Orders = () => {
-  const { backendUrl,token, currency } = useContext(GlobalContext);
-  
-  const [orderData, setOrderData] = React.useState([]);
- 
+  const { backendUrl, token, currency } = useContext(GlobalContext);
+  const { userData } = useContext(UserContext);
+  const [orderData, setOrderData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const loadOrderData = async () => {
-    try{
-      if(!token) {
-        return null;
+    try {
+      if (!token) return;
+
+      const responce = await axios.post(
+        backendUrl + "/api/order/userorders",
+        {},
+        { headers: { token } }
+      );
+
+      if (responce.data.success) {
+        let allOrdersItem = [];
+        responce.data.orders.map((order) => {
+          order.items.map((item) => {
+            item["orderId"] = order._id;
+            item["status"] = order.status;
+            item["payment"] = order.payment;
+            item["paymentMethod"] = order.paymentMethod;
+            item["date"] = order.date;
+            allOrdersItem.push(item);
+          });
+        });
+
+        console.log("All Orders Item:", allOrdersItem);
+        setOrderData(allOrdersItem.reverse());
       }
-
-    const  responce = await  axios.post(backendUrl+"/api/order/userorders",{},{headers:{token}})   
-
-      console.log("Response from loadOrderData:", responce.data);
-
-    if(responce.data.success){
-      let allOrdersItem =[]
-      responce.data.orders.map((order)=>{
-        order.items.map((item)=>{
-           item['orderId'] = order._id;
-           item['status'] = order.status;
-           item['payment'] = order.payment;
-           item['paymentMethod'] = order.paymentMethod;
-           item['date'] = order.date;
-           allOrdersItem.push(item);
-        })
-      })
-      setOrderData(allOrdersItem.reverse());
-      console.log("Order data loaded successfully:", allOrdersItem);
-    }
-    }catch(err){
+    } catch (err) {
       console.error("Error loading order data:", err);
       setOrderData([]);
     }
-  }
+  };
 
-  const CancelOrder = async (orderId,size, itemId) => {
-      console.log("Cancelling order with ID:", orderId);
+  const CancelOrder = async (orderId, size, itemId, price, quantity) => {
     try {
-      console.log("Cancelling order with ID:", orderId, "Size:", size, "Item ID:", itemId);
+      console.log("Cancelling order:", orderId, size, itemId, price, quantity);
+      setLoading(true);
       const response = await axios.post(
         backendUrl + "/api/order/cancel",
-        { orderId 
-          ,size,
-          itemId
-        },
+        { orderId, size, itemId, price, quantity },
         { headers: { token } }
       );
 
       if (response.data.success) {
         console.log("Order cancelled successfully");
-        loadOrderData(); // Reload order data after cancellation
+        loadOrderData();
       } else {
         console.error("Failed to cancel order:", response.data.message);
       }
     } catch (error) {
       console.error("Error cancelling order:", error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const CancelAllOrders = async () => {
+    try {
+      console.log("OrderData ", orderData);
+      setLoading(true);
+      const response = await axios.post(
+        backendUrl + "/api/order/cancelAll",
+        {},
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        console.log("All orders cancelled successfully");
+        toast.success("All orders cancelled successfully");
+        loadOrderData();
+      } else {
+        console.error("Failed to cancel all orders:", response.data.message);
+        toast.error("Failed to cancel all orders");
+      }
+    } catch (error) {
+      console.error("Error cancelling all orders:", error);
+      toast.error("Error cancelling all orders");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    if (!token) return;
+    loadOrderData();
+  }, [token]);
+
+  useEffect(() => {
+    socket.emit("joinUserRoom", userData._id);
+
+    socket.on("orderStatusUpdated", () => {
       loadOrderData();
-  }, [token])
+    });
+
+    socket.on("orderCancelled", (data) => {
+      toast.info("Order Cancelled");
+      console.log("Order Cancelled:", data);
+      loadOrderData();
+    });
+
+    socket.on("AllOrderCancelled", (data) => {
+      toast.info(data.message);
+      loadOrderData();
+    });
+
+    return () => {
+      socket.off("orderStatusUpdated");
+      socket.off("orderCancelled");
+      socket.off("AllOrderCancelled");
+    };
+  }, [userData]);
 
   return (
-    <div className="border-t pt-16">
-      <div className="text-2xl  ">
+    <div className="border-t pt-16 relative">
+      {/* Fullscreen loading overlay */}
+
+
+      <div className="text-2xl">
         <Title text1={"MY"} text2={"ORDERS"} />
       </div>
 
@@ -109,30 +163,48 @@ const Orders = () => {
                     hour12: true,
                   })}
                 </p>
-                 <p className='text-sm text-gray-500 mt-2'>
-                  Payment : <span className='text-gray-700'> {item.paymentMethod}</span>
-                 </p>
-              
+                <p className="text-sm text-gray-500 mt-2">
+                  Payment :{" "}
+                  <span className="text-gray-700"> {item.paymentMethod}</span>
+                </p>
               </div>
 
-              {/* This column stays fixed width and aligns vertically with others */}
               <div className="w-40 flex items-center gap-2 self-start sm:self-center">
-                <p className="w-2 h-2 rounded-full bg-green-500"></p> 
+                <p className="w-2 h-2 rounded-full bg-green-500"></p>
                 <p className="text-sm md:text-base">{item.status}</p>
               </div>
 
-              <button  onClick={()=>  loadOrderData()} className="border py-4 px-2 text-sm font-medium rounded-sm cursor-pointer ">
-                Track Order
-              </button>
-              <button  onClick={()=>  CancelOrder(item.orderId,item.size,item._id)} className="border py-4 px-2 text-sm font-medium rounded-sm cursor-pointer ">
+              <button
+                onClick={() =>
+                  CancelOrder(item.orderId, item.size, item._id, item.price, item.quantity)
+                }
+                className={`border py-4 px-2 text-sm font-medium rounded-sm cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={loading}
+              >
                 Cancel Order
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {orderData.length === 0 && (
+        <div className="text-center py-10 text-gray-500">No orders found.</div>
+      )}
+
+      {orderData.length > 0 && (
+        <div className="text-center flex justify-end items-center text-sm md:text-[16px]">
+          <button
+            className={`bg-red-500 text-white px-4 py-2 rounded-md mt-4 cursor-pointer hover:bg-red-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={CancelAllOrders}
+            disabled={loading}
+          >
+            Cancel All Orders
+          </button>
+        </div>
+      )}
     </div>
   );
-}
+};
 
-export default Orders
+export default Orders;

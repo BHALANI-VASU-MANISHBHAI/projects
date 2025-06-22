@@ -1,5 +1,4 @@
 import  {  useState } from 'react';
-import { assets } from "../assets/admin_assets/assets";
 import { assetss } from "../assets/frontend_assets/assetss";
 import { Link, NavLink } from 'react-router-dom';
 import { useContext } from 'react';
@@ -17,8 +16,9 @@ const Navbar = () => {
   const {setShowSearch, setToken, token,navigate} = useContext(GlobalContext);
   const { getCartCount, setCartItems } = useContext(CartContext);
   const { userData, setUserData } = useContext(UserContext);
-    
+  
   const [visible, setVisible] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState("https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png");
 const  logout = () => {
   setToken('');
   localStorage.removeItem('token');
@@ -26,6 +26,11 @@ const  logout = () => {
   setUserData({});
   navigate('/login');
 }
+
+  useEffect(() => {
+  
+    setProfilePhoto(userData.profilePhoto || "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png");
+  }, [userData]);
  
 
 
@@ -76,16 +81,14 @@ const  logout = () => {
   <img 
   onClick={() => token ? null : navigate('/login')} 
   src={
-    userData.profilePhoto
-      ? userData.profilePhoto
-      : "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png"
+    profilePhoto
   } 
   alt="profile" 
   className={`cursor-pointer rounded-full ${userData.profilePhoto ? 'w-7 h-7' : 'w-5 h-5'}`} 
 />
 
      { token &&
-          <div className='group-hover:block hidden absolute right-0 pt-4'>
+          <div className='group-hover:block hidden absolute right-0 pt-4 z-100'>
             <div className='flex flex-col bg-white shadow-lg rounded-lg p-4 gap-2 w-40'>
               <p onClick={()=>navigate('/profile-view')}   className='text-sm text-gray-700 hover:text-black cursor-pointer'>My Profile</p>
               <p  onClick={()=>navigate('/orders')}  className='text-sm text-gray-700 hover:text-black cursor-pointer'>Orders</p>

@@ -72,7 +72,16 @@ import { ProductContext } from "../context/ProductContext.jsx";
                     <div className="flex items-center gap-5 mt-2">
                       <p className="">
                         {" "}
-                        {currency} {ProductData.price}
+                        {currency} 
+                       <span className={`${ProductData.discount>0?'line-through' :''}`} > {ProductData.price .toFixed(2)}</span>
+                        {
+                          ProductData.discount>0 &&
+                          
+                          <span className=" text-gray-500  ml-2">
+                            {currency} {(ProductData.price * (1 - ProductData.discount / 100)).toFixed(2)}
+                            </span>
+                        }
+                        
                       </p>
                       <p className="px-2 sm:px-3 sm:py-1  bg-slate-50">
                         {" "}
@@ -84,6 +93,7 @@ import { ProductContext } from "../context/ProductContext.jsx";
                 <input
                   type="number"
                   min={1}
+                  max ={ProductData.stock[0].quantity}
                   onChange={(e) => e.target.value==='' ||e.target.value=='0' ?null : updateQuantity({
                     itemId: item._id,
                     size: item.size,
@@ -118,7 +128,7 @@ import { ProductContext } from "../context/ProductContext.jsx";
                   return;
                 }
                 navigate("/place-order");
-              }}  className="bg-black text-white text-sm my-8 py-3 px-2 ">
+              }}  className="bg-black text-white text-sm my-8 py-3 px-2 cursor-pointer hover:bg-orange-400 transition-all duration-300 ease-in-out w-full sm:w-[200px]">
                 PROCCED TO CHECKOUT 
               </button>
 

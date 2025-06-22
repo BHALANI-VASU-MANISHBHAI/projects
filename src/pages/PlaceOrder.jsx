@@ -28,6 +28,7 @@ const PlaceOrder = () => {
   const [otpVerified, setOtpVerified] = React.useState(false);
   const [otpSent, setOtpSent] = React.useState(false);
   const [otpLoading, setOtpLoading] = React.useState(false);
+  const[PlaceOrder , setPlaceOrder] = React.useState(false);
 
   const [formData, setFormData] = React.useState({
     firstName: "",
@@ -106,6 +107,30 @@ const PlaceOrder = () => {
       setOtpLoading(false);
     }
   };
+  // Spinner Component
+const Spinner = () => (
+  <svg
+    className="animate-spin h-5 w-5 text-white"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+    ></path>
+  </svg>
+);
+
 
 
   React.useEffect(() => {
@@ -153,127 +178,132 @@ const PlaceOrder = () => {
     }
   };
 
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
+const onSubmitHandler = async (e) => {
+  e.preventDefault();
 
-    if (!isValidAddress(formData.state, formData.city)) {
-      toast.error("Please enter a valid state and city combination.");
-      return;
+  if(PlaceOrder){
+    return;
+  }
+
+  if (!isValidAddress(formData.state, formData.city)) {
+    toast.error("Please enter a valid state and city combination.");
+    return;
+  }
+  
+  const zipcode = formData.zipcode;
+  if (!/^\d{6}$/.test(zipcode)) {
+    toast.error("Please enter a valid 6-digit Indian zipcode.");
+    return;
+  }
+  
+  setPlaceOrder(true); 
+  
+  let orderItems = [];
+  for (const item in cartItems) {
+    for (const size in cartItems[item]) {
+      if (cartItems[item][size] > 0) {
+        const itemInfo = cloneDeep(products.find((p) => p._id === item));
+        if (itemInfo) {
+          itemInfo.size = size;
+          itemInfo.quantity = cartItems[item][size];
+          orderItems.push(itemInfo);
+        }
+      }
     }
-    
-      const zipcode = formData.zipcode;
-      // Check if the zipcode is a valid Indian zipcode
-      if (!/^\d{6}$/.test(zipcode)) {
-        toast.error("Please enter a valid 6-digit Indian zipcode.");
+  }
+
+  let orderData = {
+    address: formData,
+    items: orderItems,
+    amount: getCartAmount() + delivery_fee - (Subscriber ? getCartAmount() * 0.2 : 0),
+  };
+
+  try {
+    if (method === "cod") {
+      const response = await axios.post(
+        backendUrl + "/api/order/place",
+        orderData,
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        setCartItems({});
+        navigate("/orders");
+      } else {
+        toast.error(response.data.message);
+      }
+    } else if (method === "razorpay") {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error("Failed to load Razorpay. Try again.");
         return;
       }
-    
 
-    let orderItems = [];
-    for (const item in cartItems) {
-      for (const size in cartItems[item]) {
-        if (cartItems[item][size] > 0) {
-          const itemInfo = cloneDeep(products.find((p) => p._id === item));
-          if (itemInfo) {
-            itemInfo.size = size;
-            itemInfo.quantity = cartItems[item][size];
-            orderItems.push(itemInfo);
-          }
-        }
-      }
-    }
+      const razorpayResponse = await axios.post(
+        backendUrl + "/api/order/razorpay",
+        {
+          amount: orderData.amount,
+          currency: "INR",
+          orderData: orderData,
+        },
+        { headers: { token } }
+      );
 
-    let orderData = {
-      address: formData,
-      items: orderItems,
-      amount:
-        getCartAmount() +
-        delivery_fee -
-        (Subscriber ? getCartAmount() * 0.2 : 0),
-    };
+      if (razorpayResponse.data.success) {
+        const options = {
+          key: razorpayKey,
+          amount: razorpayResponse.data.razorpayOrder.amount,
+          currency: "INR",
+          name: "Vasu Store",
+          description: "Order Payment",
+          order_id: razorpayResponse.data.razorpayOrder.id,
+          handler: async (response) => {
+            try {
+              const verifyResponse = await axios.post(
+                backendUrl + "/api/order/verify-order-razorpay",
+                {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: orderData,
+                },
+                { headers: { token } }
+              );
 
-    try {
-      if (method === "cod") {
-        const response = await axios.post(
-          backendUrl + "/api/order/place",
-          orderData,
-          { headers: { token } }
-        );
-        if (response.data.success) {
-          setCartItems({});
-          navigate("/orders");
-        } else {
-          toast.error(response.data.message);
-        }
-      } else if (method === "razorpay") {
-        const scriptLoaded = await loadRazorpayScript();
-        if (!scriptLoaded) {
-          toast.error("Failed to load Razorpay. Try again.");
-          return;
-        }
-
-        const razorpayResponse = await axios.post(
-          backendUrl + "/api/order/razorpay",
-          {
-            amount: orderData.amount,
-            currency: "INR",
-            orderData: orderData,
-          },
-          { headers: { token } }
-        );
-
-        if (razorpayResponse.data.success) {
-          const options = {
-            key: razorpayKey,
-            amount: razorpayResponse.data.razorpayOrder.amount,
-            currency: "INR",
-            name: "Vasu Store",
-            description: "Order Payment",
-            order_id: razorpayResponse.data.razorpayOrder.id,
-            handler: async (response) => {
-              try {
-                const verifyResponse = await axios.post(
-                  backendUrl + "/api/order/verify-order-razorpay",
-                  {
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    orderData: orderData,
-                  },
-                  { headers: { token } }
-                );
-
-                if (verifyResponse.data.success) {
-                  setCartItems({});
-                  navigate("/orders");
-                } else {
-                  toast.error(verifyResponse.data.message);
-                }
-              } catch (error) {
-                toast.error("Payment verification failed.");
+              if (verifyResponse.data.success) {
+                setCartItems({});
+                navigate("/orders");
+              } else {
+                toast.error(verifyResponse.data.message);
               }
-            },
-            prefill: {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              contact: formData.phone,
-            },
-            theme: {
-              color: "#F37254",
-            },
-          };
+            } catch (error) {
+              toast.error("Payment verification failed.");
+            } finally {
+              setPlaceOrder(false); // Reset here too
+            }
+          },
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: formData.phone,
+          },
+          theme: {
+            color: "#F37254",
+          },
+        };
 
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        } else {
-          toast.error(razorpayResponse.data.message);
-        }
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        toast.error(razorpayResponse.data.message);
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong.");
+  } finally {
+    setPlaceOrder(false); // This ensures the loading state is always reset
+  }
+};
 
   
 
@@ -290,35 +320,99 @@ const PlaceOrder = () => {
 
         {/* Name Fields */}
         <div className="flex gap-3">
-          <input required name="firstName" value={formData.firstName} onChange={onChangeHandler} placeholder="First name" className="border py-1.5 px-3.5 rounded-md w-full" />
-          <input required name="lastName" value={formData.lastName} onChange={onChangeHandler} placeholder="Last name" className="border py-1.5 px-3.5 rounded-md w-full" />
+          <input
+            required
+            name="firstName"
+            value={formData.firstName}
+            onChange={onChangeHandler}
+            placeholder="First name"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
+          <input
+            required
+            name="lastName"
+            value={formData.lastName}
+            onChange={onChangeHandler}
+            placeholder="Last name"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
         </div>
 
-        <input required name="email" value={formData.email} onChange={onChangeHandler} placeholder="Email Address" className="border py-1.5 px-3.5 rounded-md w-full" />
-        <input required name="street" value={formData.street} onChange={onChangeHandler} placeholder="Street" className="border py-1.5 px-3.5 rounded-md w-full" />
+        <input
+          required
+          name="email"
+          value={formData.email}
+          onChange={onChangeHandler}
+          placeholder="Email Address"
+          className="border py-1.5 px-3.5 rounded-md w-full"
+        />
+        <input
+          required
+          name="street"
+          value={formData.street}
+          onChange={onChangeHandler}
+          placeholder="Street"
+          className="border py-1.5 px-3.5 rounded-md w-full"
+        />
 
         <div className="flex gap-3">
-          <input required name="city" value={formData.city} onChange={onChangeHandler} placeholder="City" className="border py-1.5 px-3.5 rounded-md w-full" />
-          <input required name="state" value={formData.state} onChange={onChangeHandler} placeholder="State" className="border py-1.5 px-3.5 rounded-md w-full" />
+          <input
+            required
+            name="city"
+            value={formData.city}
+            onChange={onChangeHandler}
+            placeholder="City"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
+          <input
+            required
+            name="state"
+            value={formData.state}
+            onChange={onChangeHandler}
+            placeholder="State"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
         </div>
 
         <div className="flex gap-3">
-          <input required name="zipcode" value={formData.zipcode}  onChange={onChangeHandler} placeholder="ZipCode" type="number" className="border py-1.5 px-3.5 rounded-md w-full" />
-          <input required name="country" value={formData.country} onChange={onChangeHandler} placeholder="Country" className="border py-1.5 px-3.5 rounded-md w-full" />
+          <input
+            required
+            name="zipcode"
+            value={formData.zipcode}
+            onChange={onChangeHandler}
+            placeholder="ZipCode"
+            type="number"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
+          <input
+            required
+            name="country"
+            value={formData.country}
+            onChange={onChangeHandler}
+            placeholder="Country"
+            className="border py-1.5 px-3.5 rounded-md w-full"
+          />
         </div>
 
-        <input required name="phone" value={formData.phone} onChange={onChangeHandler} placeholder="Phone" type="number" className="border py-1.5 px-3.5 rounded-md w-full" />
-         {!otpSent && (
+        <input
+          required
+          name="phone"
+          value={formData.phone}
+          onChange={onChangeHandler}
+          placeholder="Phone"
+          type="number"
+          className="border py-1.5 px-3.5 rounded-md w-full"
+        />
+        {!otpSent && (
           <button
             type="button"
             onClick={sendOtp}
             disabled={otpLoading || !formData.phone}
-            className="mt-2 bg-gray-500 text-white px-4 py-2 rounded"
+            className="mt-2 bg-gray-500 text-white px-4 py-2 rounded cursor-pointer"
           >
             {otpLoading ? "Sending OTP..." : "Send OTP"}
           </button>
         )}
-
 
         {otpSent && !otpVerified && (
           <>
@@ -344,7 +438,6 @@ const PlaceOrder = () => {
           <p className="text-green-600 mt-2">Phone number verified ✅</p>
         )}
       </div>
-      
 
       {/* Right Section */}
       <div className="mt-8">
@@ -353,19 +446,53 @@ const PlaceOrder = () => {
         <div className="mt-12">
           <Title text1={"PAYMENT"} text2={"METHOD"} />
           <div className="flex gap-2 flex-col lg:flex-row">
-            <div onClick={() => setMethod("razorpay")} className="flex items-center gap-3 border p-1 px-3 cursor-pointer">
-              <p className={`min-w-3.5 h-3.5 rounded-full ${method === "razorpay" ? "bg-green-400" : ""}`} />
-              <img src={assetss.razorpay_logo} alt="razorpay" className="h-5 mx-4" />
+            <div
+              onClick={() => setMethod("razorpay")}
+              className="flex items-center gap-3 border p-1 px-3 cursor-pointer"
+            >
+              <p
+                className={`min-w-3.5 h-3.5 rounded-full ${
+                  method === "razorpay" ? "bg-green-400" : ""
+                }`}
+              />
+              <img
+                src={assetss.razorpay_logo}
+                alt="razorpay"
+                className="h-5 mx-4"
+              />
             </div>
-            <div onClick={() => setMethod("cod")} className="flex items-center gap-3 border p-1 px-3 cursor-pointer">
-              <p className={`min-w-3.5 h-3.5 rounded-full ${method === "cod" ? "bg-green-400" : ""}`} />
-              <p className="text-gray-500 text-sm font-medium m-4">CASH ON DELIVERY</p>
+            <div
+              onClick={() => setMethod("cod")}
+              className="flex items-center gap-3 border p-1 px-3 cursor-pointer"
+            >
+              <p
+                className={`min-w-3.5 h-3.5 rounded-full ${
+                  method === "cod" ? "bg-green-400" : ""
+                }`}
+              />
+              <p className="text-gray-500 text-sm font-medium m-4">
+                CASH ON DELIVERY
+              </p>
             </div>
           </div>
 
-          <div className="w-full flex justify-end mt-8">
-            <button type="submit" className="bg-black text-white px-16 py-3 text-sm">PLACE ORDER</button>
-          </div>
+         <div className="w-full flex justify-end mt-8">
+  <button
+    type="submit"
+    className="bg-black text-white px-16 py-3 cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+    disabled={PlaceOrder}
+  >
+    {PlaceOrder ? (
+      <div className="flex items-center gap-2">
+        <Spinner />
+        <span>Placing Order...</span>
+      </div>
+    ) : (
+      "PLACE ORDER"
+    )}
+  </button>
+</div>
+
         </div>
       </div>
     </form>

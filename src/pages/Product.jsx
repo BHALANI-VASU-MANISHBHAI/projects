@@ -1,145 +1,195 @@
-import  { useEffect, useContext, useState } from "react";
-import { useParams } from "react-router-dom";
+  import  { useEffect, useContext, useState } from "react";
+  import { useParams } from "react-router-dom";
 
-import ReletedProducts from "../components/ReletedProducts";
-import Title from "../components/Title";
-import axios from "axios";
-import { toast } from "react-toastify";
-import Rating from "@mui/material/Rating";
-import ReviewCard from "../components/ReviewCard";
-import StarLine from "../components/StarLine";
-import { assetss } from "../assets/frontend_assets/assetss";
-import { GlobalContext } from "../context/GlobalContext.jsx";
-import { CartContext } from "../context/CartContext.jsx";
-import { UserContext } from "../context/UserContext.jsx";
-import { ProductContext } from "../context/ProductContext.jsx";
+  import ReletedProducts from "../components/ReletedProducts";
+  import Title from "../components/Title";
+  import axios from "axios";
+  import { toast } from "react-toastify";
+  import Rating from "@mui/material/Rating";
+  import ReviewCard from "../components/ReviewCard";
+  import StarLine from "../components/StarLine";
+  import { assetss } from "../assets/frontend_assets/assetss";
+  import { GlobalContext } from "../context/GlobalContext.jsx";
+  import { CartContext } from "../context/CartContext.jsx";
+  import { UserContext } from "../context/UserContext.jsx";
+  import { ProductContext } from "../context/ProductContext.jsx";
+  import socket from "../services/sockets.jsx";
 
 
-const Product = () => {
-  //  products, currency, addToCart, backendUrl, token, userData 
-  const { id } = useParams();
-  const {products} = useContext(ProductContext);
-  const {addToCart} = useContext(CartContext);
-  const{userData} = useContext(UserContext);
-  const { backendUrl, token, currency } = useContext(GlobalContext);
+  const Product = () => {
+    //  products, currency, addToCart, backendUrl, token, userData 
+    const { id } = useParams();
+    const {products } = useContext(ProductContext);
+    const {addToCart} = useContext(CartContext);
+    const{userData} = useContext(UserContext);
+    const { backendUrl, token, currency } = useContext(GlobalContext);
+    const [productData, setProductData] = useState(null);
+    const [image, setImage] = useState("");
+    const [Size, setSizes] = useState("");
+    const [Reviews, setReviews] = useState([]);
+    const [Ratings, setRatings] = useState();
+    const [avgRating, setAvgRating] = useState(0);
+    const [addComment ,setaddComment] = useState("");
+    const[showAddReview, setShowAddReview] = useState(false);
+    const [addRating , setAddRating] = useState(0);
+    const [activeTab, setActiveTab] = useState("description");
+    const [OriginalPrice , setOriginalPrice] = useState(0);
 
-  const [productData, setProductData] = useState(null);
-  const [image, setImage] = useState("");
-  const [Size, setSizes] = useState("");
-  const [Reviews, setReviews] = useState([]);
-  const [Ratings, setRatings] = useState();
-  const [avgRating, setAvgRating] = useState(0);
-  const [addComment ,setaddComment] = useState("");
-  const[showAddReview, setShowAddReview] = useState(false);
-  const [addRating , setAddRating] = useState(0);
-  const [activeTab, setActiveTab] = useState("description");
+    console.log("productData", productData);
 
-  // Fetch product details from local products state
-  const fetchProductData = () => {
-    const product = products.find((item) => item._id === id);
-    if (product) {
-      setProductData(product);
-      setImage(product.image[0]);
-    } else {
-      setProductData(null);
-    }
-  };
-
-  // Fetch reviews from backend API
-  const fetchReviews = async () => {
+  const  owner = userData?._id === productData?.userId?._id;
+    console.log("owner", owner);
+    // Fetch product details from local products state
+  const fetchProductData = async () => {  // ✅ Make it async
     try {
-      const response = await axios.get(`${backendUrl}/api/review/get/${id}`);
+      const response = await axios.get(`${backendUrl}/api/product/single/${id}`);  // ✅ await the request
+      console.log("response", response);
       if (response.data.success) {
-        setReviews(response.data.reviews);
- 
-        const ratings = response.data.reviews.map((r) => r.rating);
-        setRatings(ratings);
-        const sum = ratings.reduce((acc, val) => acc + val, 0);
-        const avg = ratings.length > 0 ? sum / ratings.length : 5;
-        setAvgRating(avg);
+        const product = response.data.product;
+          
+        if (product) {
+          setProductData(product);
+          setOriginalPrice(product.price * (1 - (product.discount || 0) / 100));
+          setAvgRating(product.avgRating || 5);
+          setRatings(product.totalReviews || 0);
+          setImage(product.image[0]);
+        } else {
+          setProductData(null);
+        }
       } else {
-        setReviews([]);
-        setAvgRating(0);
+        toast.error("Failed to fetch product data.");
       }
     } catch (error) {
-      console.log("Error fetching reviews:", error);
+      console.error("Error fetching product data:", error);
+      toast.error("Error fetching product data.");
     }
   };
 
-  const EditReview = async (reviewId, rating, comment) => {
-    try {
-      const response = await axios.put(
-        `${backendUrl}/api/review/update`,
-        {
-          reviewId,
-          rating,
-          comment,
-        },
-        {
-          headers: { token },
+
+
+    // Fetch reviews from backend API
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(`${backendUrl}/api/review/get/${id}`);
+        if (response.data.success) {
+          setReviews(response.data.reviews);
+        } else {
+          setReviews([]);
+          setAvgRating(0);
         }
-      );
+      } catch (error) {
+        console.log("Error fetching reviews:", error);
+      }
+    };
+
+    const EditReview = async (reviewId, rating, comment) => {
+      try {
+        const response = await axios.put(
+          `${backendUrl}/api/review/update`,
+          {
+            reviewId,
+            rating,
+            comment,
+          },
+          {
+            headers: { token },
+          }
+        );
+
+        if (response.data.success) {
+          fetchReviews();
+        } else {
+          toast.error("Failed to edit review.");
+        }
+      } catch (e) {
+        console.log("Error editing review:", e);
+        toast.error("Failed to edit review. Please try again later.");
+      }
+    };
+
+    const CountRating = (rating) => {
+      let count = 0;
+      for (let i = 0; i < Reviews.length; i++) {
+        if (Reviews[i].rating === rating) {
+          count++;
+        }
+      }
+      return count;
+    };
+
+    const AddReview = async () => {
+      try{
+
+        const response = await axios.post(
+          `${backendUrl}/api/review/add`,
+          {
+            productId: id,
+            rating: addRating,
+            comment: addComment,
+          },
+          {
+            headers: { token },
+          }
+        );
+  
 
       if (response.data.success) {
+        setShowAddReview(false);
+        setAddRating(0);
+        setaddComment("");
         fetchReviews();
       } else {
-        toast.error("Failed to edit review.");
+        toast.error(response.data.message || "Failed to add review.");
+        
       }
-    } catch (e) {
-      console.log("Error editing review:", e);
-      toast.error("Failed to edit review. Please try again later.");
-    }
-  };
-
-  const CountRating = (rating) => {
-    let count = 0;
-    for (let i = 0; i < Reviews.length; i++) {
-      if (Reviews[i].rating === rating) {
-        count++;
+      }catch (error) {
+      console.log("Error adding review:", error);
+        toast.error("Failed to add review. Please try again later.");
       }
+
     }
-    return count;
-  };
 
-  const AddReview = async () => {
-    try{
+    useEffect(() => {
+      fetchProductData();
+    }, [id, products]);
 
-      const response = await axios.post(
-        `${backendUrl}/api/review/add`,
-        {
-          productId: id,
-          rating: addRating,
-          comment: addComment,
-        },
-        {
-          headers: { token },
-        }
-      );
- 
-
-    if (response.data.success) {
-      setShowAddReview(false);
-      setAddRating(0);
-      setaddComment("");
+    useEffect(() => {
       fetchReviews();
-    } else {
-      toast.error(response.data.message || "Failed to add review.");
-      
-    }
-    }catch (error) {
-     console.log("Error adding review:", error);
-      toast.error("Failed to add review. Please try again later.");
-    }
-
-  }
-
+    }, [id]);
   useEffect(() => {
-    fetchProductData();
-  }, [id, products]);
+    // Join product room on mount
+    socket.emit('joinProductRoom', { productId: id });
 
-  useEffect(() => {
-    fetchReviews();
-  }, [id, , Reviews.length]);
+    socket.on('reviewAdded', (data) => {
+      if (data.productId === id) {
+        toast.success("New review added!");
+        setShowAddReview(false);
+        fetchReviews();
+      }
+    });
+
+    socket.on('reviewUpdated', (data) => {
+      console.log("data", data);
+      console.log("id", id);
+      if (data.productId === id) {
+        toast.success("Review updated successfully!");
+        setShowAddReview(false);
+        fetchReviews();
+      }
+    });
+
+    
+    // Leave product room on unmount
+    return () => {
+      socket.emit('leaveProductRoom', { productId: id });
+      socket.off('reviewAdded');
+      socket.off('reviewUpdated');
+    };
+  }, [id]);
+
+    
+
+
 
   if (!productData) return <div className="opacity-0">Loading...</div>;
 
@@ -176,31 +226,62 @@ const Product = () => {
             />
             <p className="pl-2">({avgRating.toFixed(1)})</p>
           </div>
-          <p className="mt-5 text-3xl font-medium">
+          <p className="mt-5 text-3xl font-medium"> 
             {currency}
-            {productData.price}
+            
+           <span className={` ${productData.discount?'line-through':''} `}> {productData.price}</span>
+           <span>
+            {productData.discount ? ` ${OriginalPrice}` : ""}
+            </span>
+            <span className="text-md font-semibold text-center text-md">
+            {productData.discount ? ` (${productData.discount}% OFF)` : ""}
+           </span>
+          
           </p>
           <p className="text-sm text-gray-500 mt-5 md:w-4/5">
             {productData.description}
           </p>
+          
+          <div className="flex items-center gap-2 mt-5 flex-col ">
+            <p className="text-sm text-gray-500 self-start">Available Stock:</p> 
+            <div className="flex gap-2 self-start flex-wrap">
+  {productData.sizes.map((size, index) => (
+    productData.stock[index].quantity > 0 && ( // ✅ Only show in-stock sizes
+      <span
+        key={index}
+        className="px-3 py-1 border rounded-full text-sm bg-green-100 text-green-700"
+      >
+        {size} ({productData.stock[index].quantity} in stock)
+      </span>
+    )
+  ))}
+</div>
+
+          </div>
           <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
-            <div className="flex gap-2">
-              {productData.sizes.map((item, index) => (
-                <button
-                  onClick={() => setSizes(item)}
-                  className={`border pt-2 pb-2 px-4 bg-gray-100 text-center ${
-                    item === Size ? "border-orange-500" : ""
-                  }`}
-                  key={index}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+            <div className="flex gap-2 flex-wrap">
+  {productData.sizes.map((item, index) => {
+    const isOutOfStock = productData.stock[index].quantity <= 0;
+
+    return (
+      <button
+        onClick={() => !isOutOfStock && setSizes(item)} // Prevent setting size if out of stock
+        className={`border pt-2 pb-2 px-4 bg-gray-100 text-center ${
+          item === Size ? "border-orange-500" : ""
+        } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        key={index}
+        disabled={isOutOfStock} // Disables the button (backend safety)
+      >
+        {item} {isOutOfStock && "(Out of Stock)"}
+      </button>
+    );
+  })}
+</div>
+
             <button
               onClick={() => addToCart(productData._id, Size)}
-              className="bg-black text-white py-2 px-4 w-[33%] active:bg-gray-700 text-sm"
+              className="bg-black text-white py-2 px-4 w-[33%] active:bg-gray-700 text-sm cursor-pointer"
             >
               ADD TO CART
             </button>
@@ -235,7 +316,7 @@ const Product = () => {
                 : "text-gray-600 hover:text-black hover:bg-gray-100"
             }`}
           >
-            Reviews ({Reviews.length})
+            Reviews ({productData.totalReviews || 0})
           </button>
         </div>
 
@@ -276,7 +357,7 @@ const Product = () => {
                     <p className="text-xl "> {avgRating.toFixed(1)} OUT of 5</p>
                     <button
                       onClick={() => setShowAddReview(true)}
-                      className="bg-blue-600 py-2 rounded-xl w-[65%]"
+                      className="bg-blue-600 py-2 rounded-xl w-[65%] cursor-pointer"
                     >
                       Add Review
                     </button>
@@ -293,7 +374,7 @@ const Product = () => {
                   </div>
                   <button 
                       onClick={ () => setShowAddReview(true)}
-                      className="bg-blue-600 py-2 rounded-xl md:w-[35%] sm:w-[30%] w-[50%]  md:hidden  text-white text-sm hover:bg-blue-700 "
+                      className="bg-blue-600 py-2 rounded-xl md:w-[35%] sm:w-[30%] w-[50%]  md:hidden  text-white text-sm hover:bg-blue-700 cursor-pointer "
                     >
                       Add Review
                     </button>
@@ -349,12 +430,12 @@ const Product = () => {
                       ></textarea>
 
                       <div className="flex gap-4 mt-4 justify-between">
-                        <button  onClick={()=>AddReview()}    className="bg-blue-500 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 w-[48%]">
+                        <button  onClick={()=>AddReview()}    className="bg-blue-500 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 w-[48%] cursor-pointer">
                           Submit Review
                         </button>
                         <button
                           onClick={() => setShowAddReview(false)}
-                          className="bg-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-md w-[48%]"
+                          className="bg-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-md w-[48%] cursor-pointer"
                         >
                           Cancel
                         </button>

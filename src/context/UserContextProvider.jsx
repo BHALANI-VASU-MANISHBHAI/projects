@@ -16,7 +16,6 @@ const UserContextProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      console.log("Token in getUserData:", token);
       const response = await axios.post(
         backendUrl + "/api/user/getdataofuser",
         { someKey: "someValue" },

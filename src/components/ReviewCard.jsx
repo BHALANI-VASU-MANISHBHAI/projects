@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { use } from 'react'
 import Rating from "@mui/material/Rating";
 import { assetss } from '../assets/frontend_assets/assetss';
 import { useContext } from 'react';
@@ -11,9 +11,8 @@ const ReviewCard = ({review,EditReviewFun}) => {
   const [Edit, setEdit] = React.useState(false);
   const [editedComment, setEditedComment] = React.useState("");
   const [rating, setRating] = React.useState(review.rating || 0);
-  const [REVIEW , setREVIEW] = React.useState(review.comment || "No comment provided.");
-  const isOwner = userData._id === review.userId._id;
-  
+  const isOwner = userData?._id === review.userId?._id;
+    console.log("isowner ",isOwner);
 
   React.useEffect(() => {
     if (Edit) {
@@ -26,9 +25,8 @@ const ReviewCard = ({review,EditReviewFun}) => {
   }
   , [Edit, review]);
 
-
   return (
-    <div className="flex items-center gap-4 mb-4 mt-2 sm:flex-row flex-col sm:items-start border-gray-600 p-4 rounded-lg shadow-md bg-white">
+    <div className="flex items-center gap-4 mb-4 mt-2 sm:flex-row flex-col sm:items-start border-gray-600 p-4 rounded-lg shadow-md bg-gray-200">
       <div className={`flex items-center gap-4 self-center w-full sm:w-auto relative  ${Edit? 'self-start' : 'self-center'} `}>
         
         <img
@@ -61,13 +59,12 @@ const ReviewCard = ({review,EditReviewFun}) => {
         </div>
         {/* Edit icon on small screens only */}
         <div className="ml-auto sm:hidden">
+          {isOwner &&
           <img
-            className="w-5 sm:w-8 md:w-7 lg:w-6"
+            className="w-5 sm:w-8 md:w-7 lg:w-6 "
             onClick={() => {
-              if(isOwner) {
-                return;
-              }
-              setEdit(!Edit);
+              if(!isOwner) return; // Prevent non-owners from editing
+              setEdit(!Edit); 
               if (!Edit) {
                 setEditedComment(review.comment || "No comment provided.");
                 setRating(review.rating || 0);
@@ -78,7 +75,7 @@ const ReviewCard = ({review,EditReviewFun}) => {
             }}
             src={assetss.edit_icon}
             alt=""
-          />
+          />}
         </div>
       </div>
       <div className="sm:text-left sm:px-10 w-full">
@@ -97,9 +94,9 @@ const ReviewCard = ({review,EditReviewFun}) => {
       value={editedComment}
       onChange={(e) => setEditedComment(e.target.value)}
     />
-    
+      
     <button
-      className="self-end bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-md text-sm"
+      className="self-end bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-md text-sm cursor-pointer"
       onClick={() => {
         console.log("Saved comment:", editedComment);
         setEdit(false); 
@@ -114,13 +111,13 @@ const ReviewCard = ({review,EditReviewFun}) => {
       </div>
 
       <div>
+        {isOwner && !Edit &&
         <img
           className="w-5 mt-2 sm:block hidden"
           src={assetss.edit_icon}
           alt=""
           onClick={() =>{
           if(isOwner) {
-
             setEdit(!Edit);
             if (!Edit) {
               setEditedComment(review.comment || "No comment provided.");
@@ -134,6 +131,7 @@ const ReviewCard = ({review,EditReviewFun}) => {
 
           }
         />
+        }
       </div>
     </div>
   );
