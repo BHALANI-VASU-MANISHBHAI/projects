@@ -39,6 +39,14 @@ import { ProductContext } from "../context/ProductContext.jsx";
 
     return (
       <div className="boreder t pt-14">
+         <div className=" transition-opacity ease-in duration-500 opacity-100 block sm:hidden">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-sm"
+        >
+          ← Back
+        </button>
+      </div>
         <div className="text-2xl mb-3">
           <Title text1={"YOUR"} text2={"CART"} />
         </div>
@@ -100,7 +108,7 @@ import { ProductContext } from "../context/ProductContext.jsx";
                     // string input comes 
                     quantity: Number(e.target.value),
                   })}
-                  defaultValue={item.quantity}
+                  value={item.quantity}
                   className=" max-w-10 sm:max-w-20  sm:px-2 py-1"
                 />
                 <img

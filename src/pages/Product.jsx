@@ -22,7 +22,7 @@
     const {products } = useContext(ProductContext);
     const {addToCart} = useContext(CartContext);
     const{userData} = useContext(UserContext);
-    const { backendUrl, token, currency } = useContext(GlobalContext);
+    const { backendUrl, token, currency ,navigate} = useContext(GlobalContext);
     const [productData, setProductData] = useState(null);
     const [image, setImage] = useState("");
     const [Size, setSizes] = useState("");
@@ -194,7 +194,15 @@
   if (!productData) return <div className="opacity-0">Loading...</div>;
 
   return (
-    <div className="border-t-2 pt-19 transition-opacity ease-in duration-500 opacity-100">
+    <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100  sm:block">
+      <div className=" transition-opacity ease-in duration-500 opacity-100 block sm:hidden">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-sm"
+        >
+          ← Back
+        </button>
+      </div>
       <div className="flex gap-12 sm:gap-12 flex-col sm:flex-row">
         {/* Images */}
         <div className="flex-1 flex flex-col-reverse gap-3 sm:flex-row">
@@ -226,61 +234,67 @@
             />
             <p className="pl-2">({avgRating.toFixed(1)})</p>
           </div>
-          <p className="mt-5 text-3xl font-medium"> 
+          <p className="mt-5 text-3xl font-medium">
             {currency}
-            
-           <span className={` ${productData.discount?'line-through':''} `}> {productData.price}</span>
-           <span>
-            {productData.discount ? ` ${OriginalPrice}` : ""}
+
+            <span className={` ${productData.discount ? "line-through" : ""} `}>
+              {" "}
+              {productData.price}
             </span>
+            <span>{productData.discount ? ` ${OriginalPrice}` : ""}</span>
             <span className="text-md font-semibold text-center text-md">
-            {productData.discount ? ` (${productData.discount}% OFF)` : ""}
-           </span>
-          
+              {productData.discount ? ` (${productData.discount}% OFF)` : ""}
+            </span>
           </p>
           <p className="text-sm text-gray-500 mt-5 md:w-4/5">
             {productData.description}
           </p>
-          
-          <div className="flex items-center gap-2 mt-5 flex-col ">
-            <p className="text-sm text-gray-500 self-start">Available Stock:</p> 
-            <div className="flex gap-2 self-start flex-wrap">
-  {productData.sizes.map((size, index) => (
-    productData.stock[index].quantity > 0 && ( // ✅ Only show in-stock sizes
-      <span
-        key={index}
-        className="px-3 py-1 border rounded-full text-sm bg-green-100 text-green-700"
-      >
-        {size} ({productData.stock[index].quantity} in stock)
-      </span>
-    )
-  ))}
-</div>
 
+          <div className="flex items-center gap-2 mt-5 flex-col ">
+            <p className="text-sm text-gray-500 self-start">Available Stock:</p>
+            <div className="flex gap-2 self-start flex-wrap">
+              {productData.sizes.map(
+                (size, index) =>
+                  productData.stock[index].quantity > 0 && ( // ✅ Only show in-stock sizes
+                    <span
+                      key={index}
+                      className="px-3 py-1 border rounded-full text-sm bg-green-100 text-green-700"
+                    >
+                      {size} ({productData.stock[index].quantity} in stock)
+                    </span>
+                  )
+              )}
+            </div>
           </div>
           <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
             <div className="flex gap-2 flex-wrap">
-  {productData.sizes.map((item, index) => {
-    const isOutOfStock = productData.stock[index].quantity <= 0;
+              {productData.sizes.map((item, index) => {
+                const isOutOfStock = productData.stock[index].quantity <= 0;
 
-    return (
-      <button
-        onClick={() => !isOutOfStock && setSizes(item)} // Prevent setting size if out of stock
-        className={`border pt-2 pb-2 px-4 bg-gray-100 text-center ${
-          item === Size ? "border-orange-500" : ""
-        } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-        key={index}
-        disabled={isOutOfStock} // Disables the button (backend safety)
-      >
-        {item} {isOutOfStock && "(Out of Stock)"}
-      </button>
-    );
-  })}
-</div>
+                return (
+                  <button
+                    onClick={() => !isOutOfStock && setSizes(item)} // Prevent setting size if out of stock
+                    className={`border pt-2 pb-2 px-4 bg-gray-100 text-center ${
+                      item === Size ? "border-orange-500" : ""
+                    } ${
+                      isOutOfStock
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer"
+                    }`}
+                    key={index}
+                    disabled={isOutOfStock} // Disables the button (backend safety)
+                  >
+                    {item} {isOutOfStock && "(Out of Stock)"}
+                  </button>
+                );
+              })}
+            </div>
 
             <button
-              onClick={() => addToCart(productData._id, Size)}
+              onClick={() => {
+                addToCart(productData._id, Size);
+              }}
               className="bg-black text-white py-2 px-4 w-[33%] active:bg-gray-700 text-sm cursor-pointer"
             >
               ADD TO CART
@@ -323,10 +337,7 @@
         {/* Description Panel */}
         {activeTab === "description" && (
           <div className="border border-t-0 border-gray-300 rounded-b-lg shadow-md p-6 bg-white space-y-4 text-gray-700 text-sm leading-relaxed">
-            
-            <p>
-             {productData.description}
-            </p>
+            <p>{productData.description}</p>
           </div>
         )}
 
@@ -349,7 +360,11 @@
                     readOnly
                   />
                   <p>({avgRating.toFixed(1)})</p>
-                  <p className="">  <span className="font-bold "> {Reviews.length}</span>  <span className="text-gray-800"> Reviews</span></p>
+                  <p className="">
+                    {" "}
+                    <span className="font-bold "> {Reviews.length}</span>{" "}
+                    <span className="text-gray-800"> Reviews</span>
+                  </p>
                 </div>
                 {/* Average Rating and Add Review Button */}
                 <div className="flex  gap-4  flex-col md:flex-row mb-6 mt-4">
@@ -363,7 +378,7 @@
                     </button>
                   </div>
                   <div>
-                    {[5,4,3,2,1].map((rating) => (
+                    {[5, 4, 3, 2, 1].map((rating) => (
                       <StarLine
                         key={rating}
                         LineNo={rating}
@@ -372,12 +387,12 @@
                       />
                     ))}
                   </div>
-                  <button 
-                      onClick={ () => setShowAddReview(true)}
-                      className="bg-blue-600 py-2 rounded-xl md:w-[35%] sm:w-[30%] w-[50%]  md:hidden  text-white text-sm hover:bg-blue-700 cursor-pointer "
-                    >
-                      Add Review
-                    </button>
+                  <button
+                    onClick={() => setShowAddReview(true)}
+                    className="bg-blue-600 py-2 rounded-xl md:w-[35%] sm:w-[30%] w-[50%]  md:hidden  text-white text-sm hover:bg-blue-700 cursor-pointer "
+                  >
+                    Add Review
+                  </button>
                 </div>
                 {/*Show Reviews */}
                 {Reviews.map((review) => (
@@ -430,7 +445,10 @@
                       ></textarea>
 
                       <div className="flex gap-4 mt-4 justify-between">
-                        <button  onClick={()=>AddReview()}    className="bg-blue-500 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 w-[48%] cursor-pointer">
+                        <button
+                          onClick={() => AddReview()}
+                          className="bg-blue-500 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 w-[48%] cursor-pointer"
+                        >
                           Submit Review
                         </button>
                         <button

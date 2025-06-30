@@ -3,21 +3,50 @@ import Title from './Title';
 import ProductItem from './ProductItem';
 import { ProductContext } from "../context/ProductContext.jsx";
 import ShimmerCard from './ShimmerCard'; // You must create this component
-
+import axios from 'axios';
+import socket from '../services/sockets.jsx'; // Ensure you have a socket connection set up
+import { toast } from 'react-toastify';
+import { GlobalContext } from '../context/GlobalContext.jsx';
 const BestSeller = () => {
   const { products } = useContext(ProductContext);
+  const { backendUrl } = useContext(GlobalContext);
   const [bestSellerProducts, setBestSellerProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+ useEffect(() => {
+    getBestSellerProducts();
+}, [products]);
 
-  useEffect(() => {
-    setTimeout(() => {
-    const bestProducts = products.filter(item => item.bestseller === true);
-    console.log("Best Seller Products:", bestProducts);
-    const countToShow = Math.max(4, Math.min(6, bestProducts.length));
-    setBestSellerProducts(bestProducts.slice(0, countToShow));
-    setLoading(false);
-    },500);
-  }, [products]);
+const getBestSellerProducts = async () => {
+    setLoading(true); // Start loading when fetching starts
+    try {
+        console.log("Backend URL:", backendUrl);
+        const response = await axios.get(`${backendUrl}/api/product/bestsellers`);
+
+        if (response.data.success) {
+            const bestProducts = response.data.products;
+            setBestSellerProducts(bestProducts);
+            console.log("Best Seller Products:", bestProducts);
+        } else {
+            toast.error(response.data.message || "Failed to fetch best seller products.");
+            console.log("Failed to fetch best seller products:", response.data.message);
+        }
+    } catch (error) {
+        console.log("Error fetching best seller products:", error);
+    } finally {
+        setLoading(false); // ✅ Properly stop loading after fetch is done
+    }
+};
+useEffect(() => {
+  socket.on("bestsellerUpdated", () => {
+    toast.success("Best seller products updated!");
+    getBestSellerProducts(); // refetch via API
+  });
+
+  return () => socket.off("bestsellerUpdated");
+}, []);
+
+
+
 
   return (
     <div className="my-10">

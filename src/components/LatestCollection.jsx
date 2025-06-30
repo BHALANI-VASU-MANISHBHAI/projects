@@ -11,10 +11,8 @@ const LatestCollection = () => {
 
   useEffect(() => {
     if (products.length > 0) {
-      setTimeout(() => {
       setLatestProducts(products.slice(0, 10));
       setLoading(false);
-      }, 500); // Simulate loading delay
     }
   }, [products]);
 
@@ -32,8 +30,8 @@ const LatestCollection = () => {
           ? Array(8).fill().map((_, idx) => <ShimmerCard key={idx} />) // Use ShimmerCard for loading state
           : latestProducts.map((item, index) => (
               <ProductItem
-                key={index}
-                id={item.id}
+                key={item._id || index}
+                id={item._id}
                 image={item.image}
                 name={item.name}
                 price={item.price}

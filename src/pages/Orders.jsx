@@ -35,7 +35,6 @@ const Orders = () => {
           });
         });
 
-        console.log("All Orders Item:", allOrdersItem);
         setOrderData(allOrdersItem.reverse());
       }
     } catch (err) {
@@ -69,7 +68,7 @@ const Orders = () => {
 
   const CancelAllOrders = async () => {
     try {
-      console.log("OrderData ", orderData);
+  
       setLoading(true);
       const response = await axios.post(
         backendUrl + "/api/order/cancelAll",

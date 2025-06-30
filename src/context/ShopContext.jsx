@@ -3,12 +3,14 @@ import cloneDeep from "lodash-es/cloneDeep";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useContext } from "react";
+import { GlobalContext } from "./GlobalContext";
 
 export const ShopContext = createContext();
 
 const ShopContextProvider = (props) => {
   const currency = "$";
-  const delivery_fee = 10;
+  const { delivery_fee } = useContext(GlobalContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [userData, setUserData] = useState({});

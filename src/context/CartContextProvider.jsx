@@ -25,7 +25,6 @@ const CartContextProvider = ({ children }) => {
 
       if (response.data.success) {
         setCartItems(response.data.cartData);
-        localStorage.setItem("cartItems", JSON.stringify(response.data.cartData));
       }
     } catch (e) {
       console.log("Error in get cart items", e);
@@ -43,8 +42,13 @@ const CartContextProvider = ({ children }) => {
       toast.error("Select Product Size");
       return;
     }
-
-    if (cartData[itemId]) {
+    const product = products.find((product) => product._id === itemId);
+    const Stock = product.stock.find((stock) => stock.size === size);
+    if (cartData[itemId] ) {
+      if(cartData[itemId][size] && cartData[itemId][size] >= Stock.quantity) {
+        toast.error("You have already added maximum quantity of this item");
+        return;
+      }
       cartData[itemId][size] = (cartData[itemId][size] || 0) + 1;
     } else {
       cartData[itemId] = { [size]: 1 };
